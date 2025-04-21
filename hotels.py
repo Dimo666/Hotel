@@ -20,34 +20,38 @@ hotels = [
 
 # Маршрут для получения списка отелей с фильтрацией по id и title (названию).
 # Маршрут для получения списка отелей с фильтрацией и пагинацией
+from fastapi import Query
+
+# Маршрут для получения списка отелей с фильтрацией и пагинацией
 @router.get("")
 def get_hotels(
-    id: int | None = Query(None, description="Айдишник"),
-    title: str | None = Query(None, description="Название отеля"),
+    id: int | None = Query(None, description="Айдишник отеля (необязательный)"),
+    title: str | None = Query(None, description="Название отеля (необязательное)"),
     page: int = Query(1, ge=1, description="Номер страницы (по умолчанию 1)"),
     per_page: int = Query(3, ge=1, le=100, description="Кол-во отелей на странице (по умолчанию 3)")
 ):
-    # Фильтрация
-    filtered = []
+    # Фильтрация отелей по id и title, если они указаны
+    filtered = []  # сюда складываются подходящие отели
     for hotel in hotels:
-        if id and hotel["id"] != id:
+        if id and hotel["id"] != id:  # если указан id и он не совпадает — пропускаем
             continue
-        if title and hotel["title"] != title:
+        if title and hotel["title"] != title:  # если указано название и оно не совпадает — пропускаем
             continue
-        filtered.append(hotel)
+        filtered.append(hotel)  # добавляем подходящий отель в список
 
-    # Пагинация через срез списка
-    start = (page - 1) * per_page
-    end = start + per_page
-    paginated = filtered[start:end]
+    # Пагинация: считаем начало и конец среза по странице и количеству элементов
+    start = (page - 1) * per_page  # индекс первого элемента на странице
+    end = start + per_page         # индекс последнего элемента (не включительно)
+    paginated = filtered[start:end]  # срез списка по нужным индексам
 
-    # Ответ с мета-данными
+    # Возвращаем словарь с текущей страницей, размером страницы, общим числом и результатами
     return {
-        "page": page,
-        "per_page": per_page,
-        "total": len(filtered),
-        "hotels": paginated
+        "page": page,               # текущая страница
+        "per_page": per_page,       # сколько элементов на странице
+        "total": len(filtered),     # общее количество подходящих отелей
+        "hotels": paginated         # отели на текущей странице
     }
+
 # /hotels?page=1&per_page=2 - первая страница с двумя отелями
 
 
