@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query, Body  # импортируем класс APIRouter из fastapi
 
+from dependencies import PaginationDep
 from shemas.hotels import Hotel, HotelPatch  # импортируем схемы
 
 # Создаём роутер с префиксом /hotels, все маршруты будут начинаться с ним.
@@ -25,32 +26,22 @@ from fastapi import Query
 # Маршрут для получения списка отелей с фильтрацией и пагинацией
 @router.get("")
 def get_hotels(
+    pagination: PaginationDep,
     id: int | None = Query(None, description="Айдишник отеля (необязательный)"),
     title: str | None = Query(None, description="Название отеля (необязательное)"),
-    page: int = Query(1, ge=1, description="Номер страницы (по умолчанию 1)"),
-    per_page: int = Query(3, ge=1, le=100, description="Кол-во отелей на странице (по умолчанию 3)")
 ):
     # Фильтрация отелей по id и title, если они указаны
-    filtered = []  # сюда складываются подходящие отели
+    hotels_ = []  # сюда складываются подходящие отели
     for hotel in hotels:
         if id and hotel["id"] != id:  # если указан id и он не совпадает — пропускаем
             continue
         if title and hotel["title"] != title:  # если указано название и оно не совпадает — пропускаем
             continue
-        filtered.append(hotel)  # добавляем подходящий отель в список
+        hotels_.append(hotel)  # добавляем подходящий отель в список
 
-    # Пагинация: считаем начало и конец среза по странице и количеству элементов
-    start = (page - 1) * per_page  # индекс первого элемента на странице
-    end = start + per_page         # индекс последнего элемента (не включительно)
-    paginated = filtered[start:end]  # срез списка по нужным индексам
-
-    # Возвращаем словарь с текущей страницей, размером страницы, общим числом и результатами
-    return {
-        "page": page,               # текущая страница
-        "per_page": per_page,       # сколько элементов на странице
-        "total": len(filtered),     # общее количество подходящих отелей
-        "hotels": paginated         # отели на текущей странице
-    }
+    if pagination.page and pagination.per_page:
+        return hotels_[pagination.per_page * pagination.page - 1:][:pagination.per_page]
+    return hotels_
 
 # /hotels?page=1&per_page=2 - первая страница с двумя отелями
 
