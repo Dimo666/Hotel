@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Body  # импортируем класс APIRouter из fastapi
 
 from shemas.hotels import Hotel, HotelPatch  # импортируем схемы
 
-# Создаём роутер с префиксом /hotels, все маршруты будут начинаться с него.
+# Создаём роутер с префиксом /hotels, все маршруты будут начинаться с ним.
 # Также указываем теги, чтобы в документации FastAPI они группировались.
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
@@ -30,7 +30,17 @@ def get_hotels(
 
 # Маршрут для создания нового отеля (POST-запрос).
 @router.post("")
-def create_hotel(hotel_data: Hotel):
+def create_hotel(hotel_data: Hotel = Body(openapi_examples={
+    "1": {"summary": "Sochi", "value": {
+        "title": "Отель Сочи 5 звезд у моря",
+        "name": "sochi_u_morya"
+    }},
+    "2": {"summary": "Dubai", "value": {
+            "title": "Отель Дубай 5 у фонтана",
+            "name": "dubai_fountain"
+    }},
+})
+):
     global hotels
     # Добавляем новый отель в список, назначая ему id на 1 больше последнего
     hotels.append({
