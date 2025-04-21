@@ -8,24 +8,47 @@ router = APIRouter(prefix="/hotels", tags=["Отели"])
 
 # Временное хранилище отелей (имитация базы данных)
 hotels = [
-    {"id": 1, "title": "Sochi", "name": "sochi"},
-    {"id": 2, "title": "Dubai", "name": "dubai"},
+     {"id": 1, "title": "Sochi", "name": "sochi"},
+     {"id": 2, "title": "Дубай", "name": "dubai"},
+     {"id": 3, "title": "Мальдивы", "name": "maldivi"},
+     {"id": 4, "title": "Геленджик", "name": "gelendzhik"},
+     {"id": 5, "title": "Москва", "name": "moscow"},
+     {"id": 6, "title": "Казань", "name": "kazan"},
+     {"id": 7, "title": "Санкт-Петербург", "name": "spb"},
 ]
 
+
 # Маршрут для получения списка отелей с фильтрацией по id и title (названию).
+# Маршрут для получения списка отелей с фильтрацией и пагинацией
 @router.get("")
 def get_hotels(
-    id: int | None = Query(None, description="Айдишник"),  # можно передать айди отеля
-    title: str | None = Query(None, description="Название отеля")  # или название
+    id: int | None = Query(None, description="Айдишник"),
+    title: str | None = Query(None, description="Название отеля"),
+    page: int = Query(1, ge=1, description="Номер страницы (по умолчанию 1)"),
+    per_page: int = Query(3, ge=1, le=100, description="Кол-во отелей на странице (по умолчанию 3)")
 ):
-    hotels_ = []  # сюда будем складывать отфильтрованные отели
+    # Фильтрация
+    filtered = []
     for hotel in hotels:
-        if id and hotel["id"] != id:  # если указан id и он не совпадает — пропускаем
+        if id and hotel["id"] != id:
             continue
-        if title and hotel["title"] != title:  # если указано название и оно не совпадает — пропускаем
+        if title and hotel["title"] != title:
             continue
-        hotels_.append(hotel)  # добавляем подходящий отель в результат
-    return hotels_
+        filtered.append(hotel)
+
+    # Пагинация через срез списка
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated = filtered[start:end]
+
+    # Ответ с мета-данными
+    return {
+        "page": page,
+        "per_page": per_page,
+        "total": len(filtered),
+        "hotels": paginated
+    }
+# /hotels?page=1&per_page=2 - первая страница с двумя отелями
 
 
 # Маршрут для создания нового отеля (POST-запрос).
