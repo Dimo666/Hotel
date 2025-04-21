@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Body, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Query
+
+from shemas.hotels import Hotel, HotelPatch  # импортируем схемы
 
 # Создаём роутер с префиксом /hotels, все маршруты будут начинаться с него.
 # Также указываем теги, чтобы в документации FastAPI они группировались.
@@ -26,10 +27,6 @@ def get_hotels(
         hotels_.append(hotel)  # добавляем подходящий отель в результат
     return hotels_
 
-# Схема данных, которая описывает структуру входящих данных отеля.
-class Hotel(BaseModel):
-    title: str  # отображаемое название
-    name: str   # внутреннее имя (например, slug)
 
 # Маршрут для создания нового отеля (POST-запрос).
 @router.post("")
@@ -62,16 +59,15 @@ def put_hotel(hotel_id: int, hotel_data: Hotel):
 )
 def patch_hotel(
     hotel_id: int,
-    name: str | None = Body(None),   # новое значение name (необязательно)
-    title: str | None = Body(None)   # новое значение title (необязательно)
+    hotel_data: HotelPatch,  # новое значение title (необязательно)
 ):
     global hotels
     for hotel in hotels:
         if hotel["id"] == hotel_id:
-            if title is not None:
-                hotel["title"] = title
-            if name is not None:
-                hotel["name"] = name
+            if hotel_data.title is not None:
+                hotel["title"] = hotel_data.title
+            if hotel_data.name is not None:
+                hotel["name"] = hotel_data.name
             return {"status": "OK"}
     return {"error": "Hotel not found"}
 
