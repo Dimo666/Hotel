@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body  # импортируем класс APIRouter из fastapi
 
 from src.api.dependencies import PaginationDep
-from src.shemas.hotels import Hotel, HotelPatch  # импортируем схемы
+from src.schemas.hotels import Hotel, HotelPatch  # импортируем схемы
 
 # Создаём роутер с префиксом /hotels, все маршруты будут начинаться с ним.
 # Также указываем теги, чтобы в документации FastAPI они группировались.
