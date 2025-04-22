@@ -1,7 +1,12 @@
 from fastapi import FastAPI         # Импортируем FastAPI — основной класс для создания приложения
 import uvicorn                      # Импортируем uvicorn — сервер, который запускает FastAPI-приложение
-from hotels import router as router_hotels  # Импортируем роутер из модуля hotels и даём ему короткое имя
 
+import sys # Для работы с путями
+from pathlib import Path # Для работы с путями
+
+sys.path.append(str(Path(__file__).parent.parent)) # Добавляем путь к корневому каталогу
+
+from src.api.hotels import router as router_hotels # Импортируем роутер отелей
 app = FastAPI()  # Создаём экземпляр FastAPI-приложения
 
 # Подключаем роутер отелей к основному приложению
