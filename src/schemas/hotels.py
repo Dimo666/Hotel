@@ -4,10 +4,10 @@ from pydantic import BaseModel, Field   # импортируем класс Base
 # Схема данных, которая описывает структуру входящих данных отеля.
 class Hotel(BaseModel):
     title: str  # отображаемое название
-    name: str   # внутреннее имя (например, slug)
+    location: str   # внутреннее имя (например, slug)
 
 
 # Схема данных, которая описывает структуру входящих данных отеля.
 class HotelPatch(BaseModel):
     title: str | None = Field(None)
-    name: str | None = Field(None)
+    location: str | None = Field(None)

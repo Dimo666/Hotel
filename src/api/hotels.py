@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Body  # импортируем класс APIRouter из fastapi
+from fastapi import APIRouter, Body, Query  # импортируем класс APIRouter из fastapi
+from sqlalchemy import insert
 
 from src.api.dependencies import PaginationDep
+from src.database import async_session_maker, engine
+from src.models.hotels import HotelsOrm
 from src.schemas.hotels import Hotel, HotelPatch  # импортируем схемы
 
 # Создаём роутер с префиксом /hotels, все маршруты будут начинаться с ним.
@@ -21,7 +24,7 @@ hotels = [
 
 # Маршрут для получения списка отелей с фильтрацией по id и title (названию).
 # Маршрут для получения списка отелей с фильтрацией и пагинацией
-from fastapi import Query
+
 
 # Маршрут для получения списка отелей с фильтрацией и пагинацией
 @router.get("")
@@ -48,24 +51,23 @@ def get_hotels(
 
 # Маршрут для создания нового отеля (POST-запрос).
 @router.post("")
-def create_hotel(hotel_data: Hotel = Body(openapi_examples={
+async def create_hotel(hotel_data: Hotel = Body(openapi_examples={
     "1": {"summary": "Sochi", "value": {
         "title": "Отель Сочи 5 звезд у моря",
-        "name": "sochi_u_morya"
+        "location": "sochi_u_morya"
     }},
     "2": {"summary": "Dubai", "value": {
             "title": "Отель Дубай 5 у фонтана",
-            "name": "dubai_fountain"
+            "location": "dubai_fountain"
     }},
 })
 ):
-    global hotels
-    # Добавляем новый отель в список, назначая ему id на 1 больше последнего
-    hotels.append({
-        "id": hotels[-1]["id"] + 1,
-        "title": hotel_data.title,
-        "name": hotel_data.name
-    })
+    async with async_session_maker() as session:
+        add_hotel_stmt = insert(HotelsOrm).values(**hotel_data.model_dump())
+        # print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
+        await session.execute(add_hotel_stmt)
+        await session.commit()
+
     return {"status": "OK"}
 
 # Маршрут для полного обновления данных об отеле по id (PUT-запрос).
