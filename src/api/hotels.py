@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, Query  # импортируем класс APIRouter из fastapi
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 
 from src.api.dependencies import PaginationDep
 from src.database import async_session_maker, engine
@@ -10,41 +10,37 @@ from src.schemas.hotels import Hotel, HotelPatch  # импортируем сх�
 # Также указываем теги, чтобы в документации FastAPI они группировались.
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
-# Временное хранилище отелей (имитация базы данных)
-hotels = [
-     {"id": 1, "title": "Sochi", "name": "sochi"},
-     {"id": 2, "title": "Дубай", "name": "dubai"},
-     {"id": 3, "title": "Мальдивы", "name": "maldivi"},
-     {"id": 4, "title": "Геленджик", "name": "gelendzhik"},
-     {"id": 5, "title": "Москва", "name": "moscow"},
-     {"id": 6, "title": "Казань", "name": "kazan"},
-     {"id": 7, "title": "Санкт-Петербург", "name": "spb"},
-]
 
 
-# Маршрут для получения списка отелей с фильтрацией по id и title (названию).
-# Маршрут для получения списка отелей с фильтрацией и пагинацией
-
-
-# Маршрут для получения списка отелей с фильтрацией и пагинацией
-@router.get("")
-def get_hotels(
+@router.get("") # Маршрут для получения списка отелей с фильтрацией и пагинацией
+async def get_hotels(
     pagination: PaginationDep,
     id: int | None = Query(None, description="Айдишник отеля (необязательный)"),
     title: str | None = Query(None, description="Название отеля (необязательное)"),
 ):
-    # Фильтрация отелей по id и title, если они указаны
-    hotels_ = []  # сюда складываются подходящие отели
-    for hotel in hotels:
-        if id and hotel["id"] != id:  # если указан id и он не совпадает — пропускаем
-            continue
-        if title and hotel["title"] != title:  # если указано название и оно не совпадает — пропускаем
-            continue
-        hotels_.append(hotel)  # добавляем подходящий отель в список
+    per_page = pagination.per_page or 5
+    async with async_session_maker() as session:
+        query = select(HotelsOrm)
+        if id:
+            query = query.filter_by(id=id)
+        if title:
+            query = query.filter_by(title=title)
+        query = (
+            query
+            .limit(per_page)
+            .offset(per_page * (pagination.page - 1))
+        )
 
-    if pagination.page and pagination.per_page:
-        return hotels_[pagination.per_page * pagination.page - 1:][:pagination.per_page]
-    return hotels_
+        result = await session.execute(query)
+
+        hotels = result.scalars().all()
+        # print(type(hotels), hotels)
+        return hotels
+
+
+    # if pagination.page and pagination.per_page:
+    #     return hotels_[pagination.per_page * pagination.page - 1:][:pagination.per_page]
+    # return hotels_
 
 # /hotels?page=1&per_page=2 - первая страница с двумя отелями
 
