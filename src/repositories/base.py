@@ -1,5 +1,4 @@
-from sqlalchemy import select
-
+from sqlalchemy import select, insert
 
 
 
@@ -19,3 +18,9 @@ class BaseRepository:
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         return result.scalars().all().one_or_none()
+
+    async def add(self, **kwargs):
+        stmt = self.model(**kwargs)
+        self.session.add(stmt)  # добавляем в сессию
+        await self.session.flush()  # отправляем в БД (без коммита)
+        return stmt
