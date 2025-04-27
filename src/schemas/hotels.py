@@ -1,11 +1,16 @@
-from pydantic import BaseModel, Field   # импортируем класс BaseModel из pydantic
+from pydantic import BaseModel, Field, ConfigDict  # импортируем класс BaseModel из pydantic
 
 
 # Схема данных, которая описывает структуру входящих данных отеля.
-class Hotel(BaseModel):
+class HotelAdd(BaseModel):
     title: str  # отображаемое название
     location: str   # внутреннее имя (например, slug)
 
+
+class Hotel(HotelAdd):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 # Схема данных, которая описывает структуру входящих данных отеля.
 class HotelPatch(BaseModel):

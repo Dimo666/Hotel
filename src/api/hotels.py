@@ -2,15 +2,15 @@ from fastapi import APIRouter, Body, Query  # импортируем класс 
 from src.api.dependencies import PaginationDep
 from src.database import async_session_maker, engine
 from src.repositories.hotels import HotelsRepository
-from src.schemas.hotels import Hotel, HotelPatch  # импортируем схемы
+from src.schemas.hotels import Hotel, HotelPatch, HotelAdd  # импортируем схемы
 
 # Создаём роутер с префиксом /hotels, все маршруты будут начинаться с ним.
 # Также указываем теги, чтобы в документации FastAPI они группировались.
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
 
-
-@router.get("") # Маршрут для получения списка отелей с фильтрацией и пагинацией
+# Маршрут для получения списка отелей с фильтрацией и пагинацией
+@router.get("")
 async def get_hotels(
     pagination: PaginationDep,
     location: str | None = Query(None, description="Локация отеля (необязательный)"),
@@ -38,7 +38,7 @@ async def get_hotel(
 
 # Маршрут для создания нового отеля (POST-запрос).
 @router.post("")
-async def create_hotel(hotel_data: Hotel = Body(openapi_examples={
+async def create_hotel(hotel_data: HotelAdd = Body(openapi_examples={
     "1": {"summary": "Sochi", "value": {
         "title": "Отель Сочи 5 звезд у моря",
         "location": "sochi_u_morya"
@@ -56,10 +56,9 @@ async def create_hotel(hotel_data: Hotel = Body(openapi_examples={
     return {"status": "OK", "data": hotel}
 
 
-
 # Маршрут для полного обновления данных об отеле по id (PUT-запрос).
 @router.put("/{hotel_id}")
-async def edit_hotel(hotel_id: int, hotel_data: Hotel):
+async def edit_hotel(hotel_id: int, hotel_data: HotelAdd):
     async with async_session_maker() as session:
         await HotelsRepository(session).edit(hotel_data, id=hotel_id)
         await session.commit()
