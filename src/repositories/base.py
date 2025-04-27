@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import MultipleResultsFound
 
 
+
 class BaseRepository:
     model = None
 
@@ -33,7 +34,7 @@ class BaseRepository:
         return result.scalars().one()
 
 
-    async def edit(self, data, **filter_by):
+    async def edit(self, data, exclude_unset: bool = False, **filter_by):
         obj = await self.get_one_or_none(**filter_by)
 
         if obj is None:
@@ -42,9 +43,9 @@ class BaseRepository:
         edit_data_stmt = (
             update(self.model)
             .filter_by(**filter_by)
-            .values(**data.model_dump(exclude_unset=True))
-            .execution_options(synchronize_session="fetch")
+            .values(**data.model_dump(exclude_unset=exclude_unset))
         )
+
         await self.session.execute(edit_data_stmt)
 
 
@@ -54,9 +55,6 @@ class BaseRepository:
         if obj is None:
             raise HTTPException(status_code=404, detail="Object not found")
 
-        delete_data_stmt = (
-            delete(self.model)
-            .filter_by(**filter_by)
-            .execution_options(synchronize_session="fetch")
-        )
+        delete_data_stmt = delete(self.model).filter_by(**filter_by)
+
         await self.session.execute(delete_data_stmt)

@@ -1,9 +1,6 @@
 from fastapi import APIRouter, Body, Query  # импортируем класс APIRouter из fastapi
-from sqlalchemy import insert, select, func
-
 from src.api.dependencies import PaginationDep
 from src.database import async_session_maker, engine
-from src.models.hotels import HotelsOrm
 from src.repositories.hotels import HotelsRepository
 from src.schemas.hotels import Hotel, HotelPatch  # импортируем схемы
 
@@ -65,19 +62,14 @@ async def edit_hotel(hotel_id: int, hotel_data: Hotel):
     summary="Частичное обновление данных об отеле",
     description="Тут мы частично обновляем данные об отеле: можно отправить name, а можно title"
 )
-def patch_hotel(
+async def patch_hotel(
     hotel_id: int,
     hotel_data: HotelPatch,  # новое значение title (необязательно)
 ):
-    global hotels
-    for hotel in hotels:
-        if hotel["id"] == hotel_id:
-            if hotel_data.title is not None:
-                hotel["title"] = hotel_data.title
-            if hotel_data.name is not None:
-                hotel["name"] = hotel_data.name
-            return {"status": "OK"}
-    return {"error": "Hotel not found"}
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=hotel_id)
+        await session.commit()
+    return {"status": "OK"}
 
 
 # Маршрут для удаления отеля по id (DELETE-запрос).
