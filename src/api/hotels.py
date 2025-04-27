@@ -48,16 +48,16 @@ async def create_hotel(hotel_data: Hotel = Body(openapi_examples={
 
     return {"status": "OK", "data": hotel}
 
+
+
 # Маршрут для полного обновления данных об отеле по id (PUT-запрос).
 @router.put("/{hotel_id}")
-def put_hotel(hotel_id: int, hotel_data: Hotel):
-    global hotels
-    for hotel in hotels:
-        if hotel["id"] == hotel_id:
-            hotel["title"] = hotel_data.title
-            hotel["name"] = hotel_data.name
-            return {"status": "OK"}  # если нашли и обновили
-    return {"error": "Hotel not found"}  # если не нашли отель
+async def edit_hotel(hotel_id: int, hotel_data: Hotel):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, id=hotel_id)
+        await session.commit()
+    return {"status": "OK"}
+
 
 # Маршрут для частичного обновления данных об отеле (PATCH-запрос).
 @router.patch(
@@ -79,10 +79,11 @@ def patch_hotel(
             return {"status": "OK"}
     return {"error": "Hotel not found"}
 
+
 # Маршрут для удаления отеля по id (DELETE-запрос).
 @router.delete("/{hotel_id}")
-def delete_hotel(hotel_id: int):
-    global hotels
-    # Фильтруем список, оставляя только те отели, у которых id не совпадает
-    hotels = [hotel for hotel in hotels if hotel["id"] != hotel_id]
+async def delete_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).delete(id=hotel_id)
+        await session.commit()
     return {"status": "OK"}
