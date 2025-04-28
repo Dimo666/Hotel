@@ -71,7 +71,11 @@ async def register_user(
 
 # Обработчик запроса GET /auth/only_auth
 @router.get("/only_auth")
-async def only_auth(
-        request: Request,  # Получаем объект запроса (пока не используется)
-):
-    pass  # Пока что этот обработчик ничего не делает (заготовка под будущее)
+async def only_auth(request: Request):
+    # Получаем access_token из cookies
+    access_token = request.cookies.get("access_token")
+
+    if access_token:
+        return {"message": "Токен найден", "access_token": access_token}
+    else:
+        return {"message": "Токен не найден"}
