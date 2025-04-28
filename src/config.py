@@ -13,6 +13,10 @@ class Settings(BaseSettings):
         # Собираем URL для подключения к PostgreSQL через asyncpg
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
+    JWT_SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+
     # Указываем, откуда брать переменные окружения (.env)
     model_config = SettingsConfigDict(env_file=".env")
 
