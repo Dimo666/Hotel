@@ -1,5 +1,6 @@
 # Импортируем библиотеку для работы с JWT токенами
 import jwt
+from fastapi import HTTPException
 
 # Импортируем контекст для безопасного хеширования паролей
 from passlib.context import CryptContext
@@ -33,3 +34,10 @@ class AuthService:
     # Метод для проверки пароля: сравнивает обычный и захешированный пароли
     def verify_password(self, plain_password, hashed_password):
         return self.pwd_context.verify(plain_password, hashed_password)
+
+    # Метод для декодирования токена(вывод данных)
+    def encode_token(self, token: str) -> dict:
+        try:
+            return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
+        except jwt.exceptions.DecodeError:
+            raise HTTPException(status_code=401, detail="Неверный токен")

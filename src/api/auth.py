@@ -1,7 +1,8 @@
 # Импортируем нужные классы и функции из FastAPI
 from fastapi import HTTPException
-from fastapi import APIRouter, Response, Request
+from fastapi import APIRouter, Response
 
+from src.api.dependencies import UserIdDep
 # Импортируем фабрику для создания асинхронных сессий с базой данных
 from src.database import async_session_maker
 
@@ -70,12 +71,17 @@ async def register_user(
 
 
 # Обработчик запроса GET /auth/only_auth
-@router.get("/only_auth")
-async def only_auth(request: Request):
-    # Получаем access_token из cookies
-    access_token = request.cookies.get("access_token")
+@router.get("/me")
+async def get_me(
+        user_id: UserIdDep,
+):
+    async with async_session_maker() as session:
+        user = await UsersRepository(session).get_one_or_none(id=user_id)
+    return user
 
-    if access_token:
-        return {"message": "Токен найден", "access_token": access_token}
-    else:
-        return {"message": "Токен не найден"}
+
+@router.delete("/logout")
+async def logout_user(response: Response):
+    response.delete_cookie(key="access_token")
+    return {"status": "Вы вышли из системы"}
+

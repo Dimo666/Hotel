@@ -38,22 +38,32 @@ async def get_hotel(
 
 # Маршрут для создания нового отеля (POST-запрос).
 @router.post("")
-async def create_hotel(hotel_data: HotelAdd = Body(openapi_examples={
-    "1": {"summary": "Sochi", "value": {
-        "title": "Отель Сочи 5 звезд у моря",
-        "location": "sochi_u_morya"
-    }},
-    "2": {"summary": "Dubai", "value": {
-            "title": "Отель Дубай 5 у фонтана",
-            "location": "dubai_fountain"
-    }},
-})
+async def create_hotel(
+    hotel_data: HotelAdd = Body(
+        openapi_examples={
+            "1": {
+                "summary": "Sochi",
+                "value": {
+                    "title": "Отель Сочи 5 звезд у моря",
+                    "location": "sochi_u_morya",
+                },
+            },
+            "2": {
+                "summary": "Dubai",
+                "value": {
+                    "title": "Отель Дубай 5 у фонтана",
+                    "location": "dubai_fountain",
+                },
+            },
+        }
+    )
 ):
     async with async_session_maker() as session:
         hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
 
     return {"status": "OK", "data": hotel}
+
 
 
 # Маршрут для полного обновления данных об отеле по id (PUT-запрос).
