@@ -81,7 +81,7 @@ async def edit_hotel(hotel_id: int, hotel_data: HotelAdd):
     summary="Частичное обновление данных об отеле",
     description="Тут мы частично обновляем данные об отеле: можно отправить name, а можно title"
 )
-async def patch_hotel(
+async def partially_edit_hotel(
     hotel_id: int,
     hotel_data: HotelPatch,  # новое значение title (необязательно)
 ):

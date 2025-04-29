@@ -7,7 +7,7 @@ sys.path.append(str(Path(__file__).parent.parent)) # Добавляем путь
 
 from src.api.hotels import router as router_hotels # Импортируем роутер отелей
 from src.api.auth import router as router_auth
-
+from src.api.rooms import router as router_rooms
 app = FastAPI()  # Создаём экземпляр FastAPI-приложения
 
 # Подключаем роутер отелей к основному приложению
@@ -16,6 +16,7 @@ app.include_router(router_auth)
 # Теперь все маршруты из hotels будут доступны по префиксу /hotels
 app.include_router(router_hotels)
 
+app.include_router(router_rooms)
 
 
 # Запуск приложения, если файл запущен напрямую
