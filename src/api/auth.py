@@ -2,7 +2,7 @@
 from fastapi import HTTPException
 from fastapi import APIRouter, Response
 
-from src.api.dependencies import UserIdDep
+from src.api.dependencies import UserIdDep, DBDep
 # Импортируем фабрику для создания асинхронных сессий с базой данных
 from src.database import async_session_maker
 
@@ -74,9 +74,9 @@ async def register_user(
 @router.get("/me")
 async def get_me(
         user_id: UserIdDep,
+        db: DBDep,
 ):
-    async with async_session_maker() as session:
-        user = await UsersRepository(session).get_one_or_none(id=user_id)
+    user = await db.users.get_one_or_none(id=user_id)
     return user
 
 
