@@ -22,35 +22,31 @@ class BaseRepository:
         self.session = session
 
     # Метод для получения всех записей из таблицы
+    async def get_filtered(self, **filtered_by):
+        query = select(self.model).filter_by(**filtered_by) # Формируем запрос: SELECT * FROM model с фильтрацией по указанным полям
+        result = await self.session.execute(query) # Выполняем запрос в базе данных
+        return [self.schema.model_validate(model) for model in result.scalars().all()] # Преобразуем каждый результат из ORM в Pydantic-схему
+
+    # Асинхронный метод для получения всех записей без фильтрации
     async def get_all(self, *args, **kwargs):
-        # Формируем запрос: SELECT * FROM model
-        query = select(self.model)
-        # Выполняем запрос
-        result = await self.session.execute(query)
-        # Преобразуем каждый результат из ORM в Pydantic-схему
-        return [self.schema.model_validate(model) for model in result.scalars().all()]
+        return await self.get_filtered()
+
 
     # Метод для получения одного объекта по фильтру или None
     async def get_one_or_none(self, **filter_by):
-        # Формируем запрос с фильтрацией по переданным параметрам
-        query = select(self.model).filter_by(**filter_by)
-        # Выполняем запрос
-        result = await self.session.execute(query)
+        query = select(self.model).filter_by(**filter_by) # Формируем запрос с фильтрацией по переданным параметрам
+        result = await self.session.execute(query) # Выполняем запрос
         try:
-            # Пробуем получить один результат или None
-            model = result.scalars().one_or_none()
+            model = result.scalars().one_or_none()  # Пробуем получить один результат или None
             if model is None:
                 return None
-            # Валидируем ORM-объект в Pydantic-модель
-            return self.schema.model_validate(model)
+            return self.schema.model_validate(model) # Валидируем ORM-объект в Pydantic-модель
         except MultipleResultsFound:
-            # Если найдено несколько объектов — выбрасываем ошибку 400
-            raise HTTPException(status_code=400, detail="Multiple objects found")
+            raise HTTPException(status_code=400, detail="Multiple objects found") # Если найдено несколько объектов — выбрасываем ошибку 400
 
     # Метод для добавления нового объекта
     async def add(self, data: BaseModel):
-        # Формируем запрос на вставку записи
-        add_data_stmt = (
+        add_data_stmt = (  # Формируем запрос на вставку записи
             insert(self.model)
             .values(**data.model_dump())  # Преобразуем Pydantic-объект в dict
             .returning(self.model)  # Возвращаем добавленный объект
@@ -61,12 +57,10 @@ class BaseRepository:
 
     # Метод для редактирования объекта
     async def edit(self, data, exclude_unset: bool = False, **filter_by):
-        # Проверяем, существует ли объект по фильтру
-        obj = await self.get_one_or_none(**filter_by)
+        obj = await self.get_one_or_none(**filter_by)  # Проверяем, существует ли объект по фильтру
 
         if obj is None:
-            # Если нет — ошибка 404
-            raise HTTPException(status_code=404, detail="Object not found")
+            raise HTTPException(status_code=404, detail="Object not found")  # Если нет — ошибка 404
 
         # Формируем запрос на обновление данных
         edit_data_stmt = (
@@ -79,15 +73,12 @@ class BaseRepository:
 
     # Метод для удаления объекта
     async def delete(self, **filter_by):
-        # Проверяем, существует ли объект
-        obj = await self.get_one_or_none(**filter_by)
+        obj = await self.get_one_or_none(**filter_by) # Проверяем, существует ли объект
 
         if obj is None:
-            # Если нет — ошибка 404
-            raise HTTPException(status_code=404, detail="Object not found")
+            raise HTTPException(status_code=404, detail="Object not found") # Если нет — ошибка 404
 
-        # Формируем запрос на удаление
-        delete_data_stmt = delete(self.model).filter_by(**filter_by)
+        delete_data_stmt = delete(self.model).filter_by(**filter_by) # Формируем запрос на удаление
 
         await self.session.execute(delete_data_stmt)
 
