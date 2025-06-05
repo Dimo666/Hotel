@@ -12,6 +12,7 @@ from src.database import Base # Базовый класс
 from src.models.hotels import HotelsOrm # Модель отеля
 from src.models.rooms import RoomsOrm # Модель номера
 from src.models.users import UsersOrm # Модель пользователя
+from src.models.bookings import BookingsOrm # Модель бронирования
 
 
 # this is the Alembic Config object, which provides

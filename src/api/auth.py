@@ -24,34 +24,35 @@ router = APIRouter(prefix="/auth", tags=["Авторизация и аутент
 async def login_user(
         data: UserRequestAdd,  # Получаем данные от пользователя (email и пароль)
         response: Response,    # Объект ответа для установки cookie
+        db: DBDep
 ):
-    # Открываем асинхронную сессию с базой данных
-    async with async_session_maker() as session:
-        # Получаем пользователя по email вместе с хешированным паролем
-        user = await UsersRepository(session).get_user_with_hashed_password(email=data.email)
 
-        # Если пользователь не найден — выбрасываем ошибку 401 (Unauthorized)
-        if not user:
-            raise HTTPException(status_code=401, detail="Пользователь с таким email не зарегистрирован")
+    # Получаем пользователя по email вместе с хешированным паролем
+    user = await db.users.get_user_with_hashed_password(email=data.email)
 
-        # Проверяем, совпадает ли введённый пароль с хешированным паролем в базе
-        if not AuthService().verify_password(data.password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Пароль неверный")
+    # Если пользователь не найден — выбрасываем ошибку 401 (Unauthorized)
+    if not user:
+        raise HTTPException(status_code=401, detail="Пользователь с таким email не зарегистрирован")
 
-        # Генерируем access-токен на основе ID пользователя
-        access_token = AuthService().create_access_token({"user_id": user.id})
+    # Проверяем, совпадает ли введённый пароль с хешированным паролем в базе
+    if not AuthService().verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Пароль неверный")
 
-        # Устанавливаем токен в cookie ответа
-        response.set_cookie("access_token", access_token)
+    # Генерируем access-токен на основе ID пользователя
+    access_token = AuthService().create_access_token({"user_id": user.id})
 
-        # Возвращаем токен в теле ответа
-        return {"access_token": access_token}
+    # Устанавливаем токен в cookie ответа
+    response.set_cookie("access_token", access_token)
+
+    # Возвращаем токен в теле ответа
+    return {"access_token": access_token}
 
 
 # Обработчик запроса POST /auth/register
 @router.post("/register")
 async def register_user(
         data: UserRequestAdd,  # Получаем данные от пользователя для регистрации
+        db: DBDep
 ):
     # Хешируем пароль для безопасности (никогда не храним пароли в открытом виде!)
     hashed_password = AuthService().pwd_context.hash(data.password)
@@ -59,12 +60,11 @@ async def register_user(
     # Создаём объект для нового пользователя
     new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)
 
-    # Открываем асинхронную сессию с базой данных
-    async with async_session_maker() as session:
-        # Добавляем нового пользователя через репозиторий
-        await UsersRepository(session).add(new_user_data)
-        # Подтверждаем изменения в базе данных
-        await session.commit()
+
+    # Добавляем нового пользователя через репозиторий
+    await db.users.add(new_user_data)
+    # Подтверждаем изменения в базе данных
+    await db.commit()
 
     # Возвращаем успешный ответ
     return {"status": "OK"}
