@@ -81,9 +81,3 @@ class BaseRepository:
         delete_data_stmt = delete(self.model).filter_by(**filter_by) # Формируем запрос на удаление
 
         await self.session.execute(delete_data_stmt)
-
-    # Метод для получения id
-    async def get_by_id(self, id: int):
-        query = select(self.model).filter_by(id=id)
-        result = await self.session.execute(query)
-        return result.scalars().first()
