@@ -24,7 +24,7 @@ async def add_booking(
     return {"status": "OK", "data": booking}
 
 
-@router.get("/bookings")
+@router.get("/me")
 async def get_bookings(
         db: DBDep,
 ):
