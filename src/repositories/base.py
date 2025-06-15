@@ -22,8 +22,12 @@ class BaseRepository:
         self.session = session
 
     # Метод для получения всех записей из таблицы
-    async def get_filtered(self, **filtered_by):
-        query = select(self.model).filter_by(**filtered_by) # Формируем запрос: SELECT * FROM model с фильтрацией по указанным полям
+    async def get_filtered(self, *filter, **filtered_by):
+        query = (
+            select(self.model)
+            .filter(*filter)
+            .filter_by(**filtered_by)
+        ) # Формируем запрос: SELECT * FROM model с фильтрацией по указанным полям
         result = await self.session.execute(query) # Выполняем запрос в базе данных
         return [self.schema.model_validate(model) for model in result.scalars().all()] # Преобразуем каждый результат из ORM в Pydantic-схему
 
