@@ -59,6 +59,11 @@ class BaseRepository:
         model = result.scalars().one()
         return self.schema.model_validate(model)
 
+        # Метод для добавления нового объекта
+    async def add_bulk(self, data: list[BaseModel]):
+        add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
+        await self.session.execute(add_data_stmt)
+
     # Метод для редактирования объекта
     async def edit(self, data, exclude_unset: bool = False, **filter_by):
         obj = await self.get_one_or_none(**filter_by)  # Проверяем, существует ли объект по фильтру
