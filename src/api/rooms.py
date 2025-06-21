@@ -53,26 +53,9 @@ async def edit_room(
 ):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     await db.rooms.edit(_room_data, id=room_id)
-
-    if room_data.facilities_ids is not None:
-        existing_ids = await db.rooms_facilities.get_facility_ids_by_room(room_id)
-        new_ids = set(room_data.facilities_ids)
-
-        to_add = new_ids - existing_ids
-        to_remove = existing_ids - new_ids
-
-        if to_remove:
-            await db.rooms_facilities.delete_by_room_and_facility_ids(room_id, list(to_remove))
-
-        if to_add:
-            facilities_to_add = [
-                RoomFacilityAdd(room_id=room_id, facility_id=f_id)
-                for f_id in to_add
-            ]
-            await db.rooms_facilities.add_bulk(facilities_to_add)
-
+    await db.rooms_facilities.set_room_facilities(room_id, facilities_ids=room_data.facilities_ids)
     await db.commit()
-    return {"status": "OK", "data": room_data}
+    return {"status": "OK"}
 
 
 @router.patch("/{hotel_id}/rooms/{room_id}")
@@ -82,28 +65,13 @@ async def partially_edit_room(
         room_data: RoomPatchRequest,
         db: DBDep
 ):
-    _room_data = RoomPatch(hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
+    _room_data_dict = room_data.model_dump(exclude_unset=True)
+    _room_data = RoomPatch(hotel_id=hotel_id, **_room_data_dict)
     await db.rooms.edit(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
-
-    if room_data.facilities_ids is not None:
-        existing_ids = await db.rooms_facilities.get_facility_ids_by_room(room_id)
-        new_ids = set(room_data.facilities_ids)
-
-        to_add = new_ids - existing_ids
-        to_remove = existing_ids - new_ids
-
-        if to_remove:
-            await db.rooms_facilities.delete_by_room_and_facility_ids(room_id, list(to_remove))
-
-        if to_add:
-            facilities_to_add = [
-                RoomFacilityAdd(room_id=room_id, facility_id=f_id)
-                for f_id in to_add
-            ]
-            await db.rooms_facilities.add_bulk(facilities_to_add)
-
+    if "facilities_ids" in _room_data_dict:
+        await db.rooms_facilities.set_room_facilities(room_id, facilities_ids=_room_data_dict["facilities_ids"])
     await db.commit()
-    return {"status": "OK", "data": room_data}
+    return {"status": "OK"}
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}")

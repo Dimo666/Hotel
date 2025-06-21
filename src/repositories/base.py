@@ -66,17 +66,16 @@ class BaseRepository:
 
     # Метод для редактирования объекта
     async def edit(self, data, exclude_unset: bool = False, **filter_by):
-        obj = await self.get_one_or_none(**filter_by)
+        obj = await self.get_one_or_none(**filter_by)  # Проверяем, существует ли объект по фильтру
+
         if obj is None:
-            raise HTTPException(status_code=404, detail="Object not found")
+            raise HTTPException(status_code=404, detail="Object not found")  # Если нет — ошибка 404
 
-        values = data.model_dump(exclude_unset=exclude_unset)
-        values.pop("facilities_ids", None)  # убираем поле M2M
-
+        # Формируем запрос на обновление данных
         edit_data_stmt = (
             update(self.model)
             .filter_by(**filter_by)
-            .values(**values)  # ← используем ОЧИЩЕННЫЕ values
+            .values(**data.model_dump(exclude_unset=exclude_unset))  # exclude_unset=True — обновить только переданные поля
         )
 
         await self.session.execute(edit_data_stmt)
