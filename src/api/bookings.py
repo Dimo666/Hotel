@@ -24,14 +24,14 @@ async def add_booking(
     return {"status": "OK", "data": booking}
 
 
-@router.get("/me")
+@router.get("")
 async def get_bookings(
         db: DBDep,
 ):
     return await db.bookings.get_all()
 
 
-@router.get("/bookings/me")
+@router.get("/me")
 async def get_me(
     db: DBDep,
     user_id: UserIdDep,

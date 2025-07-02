@@ -10,12 +10,14 @@ from fastapi import HTTPException
 # Импортируем исключение, которое возникает при нахождении нескольких результатов вместо одного
 from sqlalchemy.exc import MultipleResultsFound
 
+from src.repositories.mappers.base import DataMapper
+
 
 # Базовый репозиторий для работы с любыми моделями
 class BaseRepository:
     # Переменные класса, которые потом будут переопределяться в наследниках
     model = None  # ORM-модель SQLAlchemy
-    schema: BaseModel = None  # Pydantic-схема
+    mapper: DataMapper = None
 
     # При создании репозитория передаём ему активную сессию с базой данных
     def __init__(self, session):
@@ -29,7 +31,7 @@ class BaseRepository:
             .filter_by(**filtered_by)
         ) # Формируем запрос: SELECT * FROM model с фильтрацией по указанным полям
         result = await self.session.execute(query) # Выполняем запрос в базе данных
-        return [self.schema.model_validate(model) for model in result.scalars().all()] # Преобразуем каждый результат из ORM в Pydantic-схему
+        return [self.mapper.map_to_domain_entity(model) for model in result.scalars().all()] # Преобразуем каждый результат из ORM в Pydantic-схему
 
     # Асинхронный метод для получения всех записей без фильтрации
     async def get_all(self, *args, **kwargs):
@@ -44,7 +46,7 @@ class BaseRepository:
             model = result.scalars().one_or_none()  # Пробуем получить один результат или None
             if model is None:
                 return None
-            return self.schema.model_validate(model) # Валидируем ORM-объект в Pydantic-модель
+            return self.mapper.map_to_domain_entity(model) # Валидируем ORM-объект в Pydantic-модель
         except MultipleResultsFound:
             raise HTTPException(status_code=400, detail="Multiple objects found") # Если найдено несколько объектов — выбрасываем ошибку 400
 
@@ -57,7 +59,7 @@ class BaseRepository:
         )
         result = await self.session.execute(add_data_stmt)
         model = result.scalars().one()
-        return self.schema.model_validate(model)
+        return self.mapper.map_to_domain_entity(model)
 
         # Метод для добавления нового объекта
     async def add_bulk(self, data: list[BaseModel]):

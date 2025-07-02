@@ -6,6 +6,7 @@ from src.models.users import UsersOrm
 
 # Импортируем базовый репозиторий с общими методами для работы с БД
 from src.repositories.base import BaseRepository
+from src.repositories.mappers.mappers import UserDataMapper
 
 # Импортируем схемы пользователя
 from src.schemas.users import User, UserWithHashedPassword
@@ -19,7 +20,7 @@ class UsersRepository(BaseRepository):
     # Указываем, с какой моделью БД работает этот репозиторий
     model = UsersOrm
     # И с какой схемой он работает на уровне Python-объектов
-    schema = User
+    mapper = UserDataMapper
 
     # Метод для получения пользователя по email с хешированным паролем
     async def get_user_with_hashed_password(self, email: EmailStr):
