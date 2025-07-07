@@ -34,6 +34,7 @@ PyJWT==2.10.1
 python-dotenv==1.0.1
 python-multipart==0.0.9
 PyYAML==6.0.1
+redis==6.2.0
 rich==13.7.1
 rich-toolkit==0.14.1
 shellingham==1.5.4

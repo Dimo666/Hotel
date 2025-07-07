@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     DB_PASS: str   # Пароль
     DB_NAME: str   # Название базы данных
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+
     @property  # Декоратор, превращает метод в свойство
     def DB_URL(self) -> str:
         # Собираем URL для подключения к PostgreSQL через asyncpg
