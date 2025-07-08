@@ -1,5 +1,7 @@
 from datetime import date
 
+from fastapi_cache.decorator import cache
+
 from fastapi import APIRouter, Body, Query  # импортируем класс APIRouter из fastapi
 from src.api.dependencies import PaginationDep, DBDep
 from src.schemas.hotels import Hotel, HotelPatch, HotelAdd  # импортируем схемы
@@ -11,6 +13,7 @@ router = APIRouter(prefix="/hotels", tags=["Отели"])
 
 # Маршрут для получения списка отелей с фильтрацией и пагинацией
 @router.get("")
+@cache(expire=10)
 async def get_hotels(
     pagination: PaginationDep,
     db: DBDep,
