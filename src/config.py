@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
+    @property
+    def REDIS_URL(self):
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
+
     @property  # Декоратор, превращает метод в свойство
     def DB_URL(self) -> str:
         # Собираем URL для подключения к PostgreSQL через asyncpg
