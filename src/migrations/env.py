@@ -9,11 +9,8 @@ from src.config import settings
 from src.database import Base # Базовый класс
 
 # Модели Добавление!!!!!!!!
-from src.models.hotels import HotelsOrm # Модель отеля
-from src.models.rooms import RoomsOrm # Модель номера
-from src.models.users import UsersOrm # Модель пользователя
-from src.models.bookings import BookingsOrm # Модель бронирования
-from src.models.facilities import FacilitiesOrm
+from src.models import *
+
 
 
 # this is the Alembic Config object, which provides

@@ -36,7 +36,7 @@ class AuthService:
         return self.pwd_context.verify(plain_password, hashed_password)
 
     # Метод для декодирования токена(вывод данных)
-    def encode_token(self, token: str) -> dict:
+    def decode_token(self, token: str) -> dict:
         try:
             return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
         except jwt.exceptions.DecodeError:
