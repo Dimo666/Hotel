@@ -1,4 +1,4 @@
-from src.database import async_session_maker  # Фабрика асинхронных сессий SQLAlchemy
+from src.database import async_session_maker_null_pool  # Фабрика асинхронных сессий SQLAlchemy
 from src.schemas.hotels import HotelAdd       # Pydantic-схема для добавления отеля
 from src.utils.db_manager import DBManager    # Контекстный менеджер для работы с БД
 
@@ -8,7 +8,7 @@ async def test_add_hotel():
     hotel_data = HotelAdd(title="Hotels 5 stars", location="San Francisco, CA")
 
     # Открываем асинхронную сессию через DBManager
-    async with DBManager(session_factory=async_session_maker) as db:
+    async with DBManager(session_factory=async_session_maker_null_pool) as db:
         # Добавляем отель в базу данных
         new_hotel_data = await db.hotels.add(hotel_data)
 
