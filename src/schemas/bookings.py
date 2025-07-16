@@ -26,7 +26,3 @@ class Booking(BookingAdd):
 
     model_config = ConfigDict(from_attributes=True)  # Позволяет создавать из ORM-объекта
 
-class BookingPatch(BaseModel):
-    date_from: Optional[date] = None
-    date_to: Optional[date] = None
-    price: Optional[int] = None
