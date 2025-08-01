@@ -23,7 +23,7 @@ async def add_booking(
         **booking_data.model_dump(),
     )
 
-    booking = await db.bookings.add(_booking_data)  # Добавляем запись в БД
+    booking = await db.bookings.add_booking(_booking_data)  # Добавляем запись в БД
     await db.commit()
     return {"status": "OK", "data": booking}
 
