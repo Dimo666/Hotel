@@ -24,7 +24,7 @@ async def create_facilities(
 
 # Получение списка всех услуг с кэшированием (10 секунд)
 @router.get("")
-# @cache(expire=10)
+@cache(expire=10)
 async def get_facilities(
     db: DBDep,
 ):

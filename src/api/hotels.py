@@ -11,7 +11,7 @@ router = APIRouter(prefix="/hotels", tags=["Отели"])
 
 # Получение списка отелей с фильтрацией по дате, названию, локации и пагинацией
 @router.get("")
-# @cache(expire=10)
+@cache(expire=10)
 async def get_hotels(
     pagination: PaginationDep,
     db: DBDep,

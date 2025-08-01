@@ -1,6 +1,18 @@
 import json
+from unittest import mock
+
+# Отключаем кэширование в тестах, подменяя декоратор fastapi_cache.decorator.cache на пустой
+# lambda-декоратор, который просто возвращает оригинальную функцию без изменений.
+# Это нужно, чтобы кэш не влиял на поведение и результаты тестов.
+mock.patch(
+    "fastapi_cache.decorator.cache",  # Импортируемый путь к декоратору, который нужно замокать
+    lambda *args, **kwargs: lambda f: f  # Подмена: декоратор ничего не делает и возвращает исходную функцию
+).start()  # Активируем патч сразу при импорте
+
+
 import pytest
 from httpx import AsyncClient
+
 
 # Зависимость для получения сессии БД
 from src.api.dependencies import get_db
