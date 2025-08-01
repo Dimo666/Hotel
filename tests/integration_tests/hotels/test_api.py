@@ -10,6 +10,6 @@ async def test_get_hotels(ac):
         }
 
     )
-    print(f"{responses.json()=}")
 
     assert responses.status_code == 200
+    assert isinstance(responses.json(), list)
