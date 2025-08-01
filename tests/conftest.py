@@ -100,20 +100,25 @@ async def register_user(ac, setup_database):
         }
     )
 
+
+
+# 📌 Фикстура для получения аутентифицированного HTTP-клиента
+# Используется в тестах, где требуется доступ к защищённым ручкам (например, /bookings/me)
 @pytest.fixture(scope="session")
-async def authenticated_ac(ac: AsyncClient, register_user) -> AsyncClient:
-    # Выполняем вход: получаем access_token
-    response = await ac.post(
+async def authenticated_ac(register_user, ac):
+    # Отправляем POST-запрос на /auth/login для получения access_token
+    await ac.post(
         "/auth/login",
         json={
             "email": "kot@pes.com",
             "password": "1234"
         }
     )
-    assert response.status_code == 200
-    access_token = response.json()["access_token"]
 
-    # Добавляем токен в заголовки клиента
-    ac.headers.update({"Authorization": f"Bearer {access_token}"})
+    # Проверяем, что access_token был сохранён в cookie клиента
+    assert ac.cookies["access_token"]
 
+    # Возвращаем клиента с установленным токеном — он будет автоматически
+    # передаваться в cookie при последующих запросах
     yield ac
+
