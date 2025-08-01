@@ -9,23 +9,36 @@ router = APIRouter(prefix="/bookings", tags=["Бронирования"])
 # Добавление бронирования (POST /bookings)
 @router.post("")
 async def add_booking(
-    user_id: UserIdDep,              # Получаем user_id из токена
-    db: DBDep,                       # Зависимость — доступ к БД
-    booking_data: BookingAddRequest # Входные данные от клиента
+    user_id: UserIdDep,              # Получаем user_id из токена (авторизованного пользователя)
+    db: DBDep,                       # Зависимость для доступа к базе данных
+    booking_data: BookingAddRequest # Данные, которые прислал клиент (room_id, даты)
 ):
-    room = await db.rooms.get_one_or_none(id=booking_data.room_id)  # Получаем цену комнаты
+    # Получаем объект комнаты по ID, чтобы узнать её цену
+    room = await db.rooms.get_one_or_none(id=booking_data.room_id)
+
+    # Получаем отель, к которому принадлежит комната (нужен для проверки доступности)
+    hotel = await db.hotels.get_one_or_none(id=room.hotel_id)
+
+    # Получаем цену комнаты
     room_price: int = room.price
 
-    # Собираем полную схему для сохранения (добавляем user_id и цену)
+    # Собираем полные данные для бронирования:
+    # добавляем user_id и цену, а остальные поля берём из запроса
     _booking_data = BookingAdd(
         user_id=user_id,
         price=room_price,
         **booking_data.model_dump(),
     )
 
-    booking = await db.bookings.add_booking(_booking_data)  # Добавляем запись в БД
+    # Добавляем бронирование с учётом доступности комнаты в отеле
+    booking = await db.bookings.add_booking(_booking_data, hotel_id=hotel.id)
+
+    # Сохраняем изменения в базе
     await db.commit()
+
+    # Возвращаем успешный ответ с данными о бронировании
     return {"status": "OK", "data": booking}
+
 
 
 # Получение всех бронирований (GET /bookings) — для админов

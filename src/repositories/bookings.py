@@ -1,7 +1,7 @@
 from datetime import date
 from sqlalchemy import select
 
-from src.models import RoomsOrm
+
 from src.models.bookings import BookingsOrm  # ORM-модель бронирования
 from src.repositories.base import BaseRepository  # Базовый репозиторий с session
 from src.repositories.mappers.mappers import BookingDataMapper  # Маппер ORM → Domain Entity
@@ -23,30 +23,27 @@ class BookingsRepository(BaseRepository):
         # Преобразование ORM-объектов в доменные сущности через маппер
         return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]
 
-    async def add_booking(self, booking_data: BookingAdd):
-        # Получаем комнату (для hotel_id и проверки на существование)
-        room = await self.session.get(RoomsOrm, booking_data.room_id)
-        if not room:
-            raise Exception("Комната не найдена")
 
-        # Получаем SELECT-запрос со списком доступных комнат
-        stmt = rooms_ids_for_booking(
-            date_from=booking_data.date_from,
-            date_to=booking_data.date_to,
-            hotel_id=room.hotel_id
+
+    async def add_booking(self, data: BookingAdd, hotel_id: int):
+        # Получаем SQL-запрос на свободные комнаты в указанный период и отеле
+        rooms_ids_to_get = rooms_ids_for_booking(
+            date_from=data.date_from,
+            date_to=data.date_to,
+            hotel_id=hotel_id,
         )
 
-        # Выполняем запрос и получаем список доступных ID
-        result = await self.session.execute(stmt)
-        available_room_ids = [row[0] for row in result.all()]
+        # Выполняем запрос к базе данных
+        rooms_ids_to_book_res = await self.session.execute(rooms_ids_to_get)
 
-        # Проверяем, доступна ли нужная комната
-        if booking_data.room_id not in available_room_ids:
-            raise Exception("Нет свободных номеров")
+        # Извлекаем список ID доступных комнат
+        rooms_ids_to_book: list[int] = rooms_ids_to_book_res.scalars().all()
 
-        # Всё ок — создаём бронь
-        orm_booking = self.mapper.map_to_persistence_entity(booking_data)
-        self.session.add(orm_booking)
-        await self.session.flush()
-
-        return self.mapper.map_to_domain_entity(orm_booking)
+        # Проверяем, входит ли нужная комната в список доступных
+        if data.room_id in rooms_ids_to_book:
+            # Если да — создаём бронь и возвращаем её
+            new_booking = await self.add(data)
+            return new_booking
+        else:
+            # Если нет — выбрасываем исключение (ошибка: комната занята)
+            raise Exception("Комната недоступна для бронирования на указанные даты.")
