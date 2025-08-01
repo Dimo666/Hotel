@@ -99,3 +99,21 @@ async def register_user(ac, setup_database):
             "password": "1234"
         }
     )
+
+@pytest.fixture(scope="session")
+async def authenticated_ac(ac: AsyncClient, register_user) -> AsyncClient:
+    # Выполняем вход: получаем access_token
+    response = await ac.post(
+        "/auth/login",
+        json={
+            "email": "kot@pes.com",
+            "password": "1234"
+        }
+    )
+    assert response.status_code == 200
+    access_token = response.json()["access_token"]
+
+    # Добавляем токен в заголовки клиента
+    ac.headers.update({"Authorization": f"Bearer {access_token}"})
+
+    yield ac
