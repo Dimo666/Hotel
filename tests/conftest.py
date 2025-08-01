@@ -1,71 +1,83 @@
 import json
 import pytest
-from sqlalchemy import insert
 from httpx import AsyncClient
 
-# Настройки проекта (в том числе переменная окружения MODE)
+# Зависимость для получения сессии БД
+from src.api.dependencies import get_db
+# Настройки проекта, включая переменную окружения MODE
 from src.config import settings
-
-# SQLAlchemy: базовый класс моделей и движок без connection pool (NullPool для тестов)
+# SQLAlchemy: базовая модель и движок без connection pool (NullPool используется для тестов)
 from src.database import Base, engine_null_pool, async_session_maker_null_pool
-
 # Импорт приложения FastAPI
 from src.main import app
-
-# Импорт всех моделей, чтобы Base.metadata увидела все таблицы
+# Импорт всех моделей (чтобы Base.metadata знала о всех таблицах)
 from src.models import *
+# Схемы для отелей и номеров
 from src.schemas.hotels import HotelAdd
 from src.schemas.rooms import RoomAdd
+# Утилита для работы с базой через репозитории
 from src.utils.db_manager import DBManager
 
 
-# ⛔ Защита: тесты можно запускать только если MODE=TEST
+# ⛔ Фикстура проверки окружения (тесты можно запускать только если MODE=TEST)
 @pytest.fixture(scope="session", autouse=True)
 def check_test_mode():
     assert settings.MODE == "TEST"
 
 
-@pytest.fixture(scope="function")
-async def db() -> DBManager:
+# 📦 Фикстура для переопределения зависимости get_db, чтобы использовать тестовый движок
+async def get_db_null_pool():
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         yield db
 
 
-# 🛠 Фикстура инициализации БД: удаляет и создаёт таблицы, загружает тестовые данные
+# 📦 Фикстура для получения менеджера БД в отдельных тестах
+@pytest.fixture(scope="function")
+async def db() -> DBManager:
+    async for db in get_db_null_pool():
+        yield db
+
+
+# ⛓️ Переопределяем зависимость get_db на тестовую версию
+app.dependency_overrides[get_db] = get_db_null_pool
+
+
+# 🛠️ Фикстура инициализации БД:
+# - удаляет все таблицы,
+# - создаёт заново структуру БД,
+# - заполняет тестовыми данными из JSON
 @pytest.fixture(scope="session", autouse=True)
 async def setup_database(check_test_mode):
-    # Подключаемся к базе данных без connection pool (NullPool подходит для тестов)
     async with engine_null_pool.begin() as conn:
-        # Удаляем все таблицы перед тестами (гарантированно чистая база)
-        await conn.run_sync(Base.metadata.drop_all)
-        # Создаём заново все таблицы, чтобы работать с актуальной схемой
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(Base.metadata.drop_all)   # Удаляем все таблицы
+        await conn.run_sync(Base.metadata.create_all) # Создаём заново таблицы
 
-    # Загружаем фикстурные (тестовые) данные из JSON-файлов
+    # Загружаем тестовые данные
     with open("tests/mock_hotels.json", encoding="utf-8") as file_hotels:
         hotels = json.load(file_hotels)
     with open("tests/mock_rooms.json", encoding="utf-8") as file_rooms:
         rooms = json.load(file_rooms)
 
-    # Валидируем и превращаем словари в Pydantic-модели HotelAdd и RoomAdd
+    # Преобразуем словари в Pydantic-схемы
     hotels = [HotelAdd.model_validate(hotel) for hotel in hotels]
     rooms = [RoomAdd.model_validate(room) for room in rooms]
 
-    # Через менеджер БД добавляем тестовые данные в таблицы
+    # Добавляем тестовые записи в базу
     async with DBManager(session_factory=async_session_maker_null_pool) as db_:
-        await db_.hotels.add_bulk(hotels)  # Массово добавляем отели
-        await db_.rooms.add_bulk(rooms)    # Массово добавляем номера
-        await db_.commit()  # Подтверждаем изменения
+        await db_.hotels.add_bulk(hotels)
+        await db_.rooms.add_bulk(rooms)
+        await db_.commit()
 
 
+# 🌐 Фикстура HTTP-клиента для работы с API через httpx
 @pytest.fixture(scope="session")
 async def ac() -> AsyncClient:
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 
 
-# 🔐 Фикстура регистрации пользователя через эндпоинт /auth/register
-# Выполняется после инициализации БД
+# 🔐 Фикстура регистрации тестового пользователя
+# Используется перед тестами, где нужна авторизация
 @pytest.fixture(scope="session", autouse=True)
 async def register_user(ac, setup_database):
     await ac.post(
