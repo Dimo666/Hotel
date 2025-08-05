@@ -2,6 +2,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from src.exceptions import InvalidDateRangeException
 from src.models.rooms import RoomsOrm  # ORM-модель комнат
 from src.repositories.base import BaseRepository  # Базовый репозиторий
 from src.repositories.mappers.mappers import (
@@ -24,6 +25,11 @@ class RoomsRepository(BaseRepository):
         date_from: date,
         date_to: date,
     ):
+
+        # Проверка диапазона дат
+        if date_from > date_to:
+            raise InvalidDateRangeException()
+
         # Получаем список ID свободных комнат
         rooms_ids_to_get = rooms_ids_for_booking(date_from, date_to, hotel_id)
 

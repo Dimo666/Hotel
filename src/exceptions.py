@@ -11,3 +11,16 @@ class ObjectNotFoundException(BaseClassException):
 
 class AllRoomsAreBookedException(BaseClassException):
     detail = "Не осталось свободных номеров"
+
+class UserAlreadyExistsException(BaseClassException):
+    detail = "Пользователь уже существует"
+
+class InvalidDateRangeException(BaseClassException):
+    detail = "Дата выезда не может быть раньше даты заезда"
+
+class NoHotelsFoundException(BaseClassException):
+    detail = "Подходящие отели не найдены"
+
+class NoRoomsFoundException(BaseClassException):
+    detail = "Свободные номера не найдены"
+

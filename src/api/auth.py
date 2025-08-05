@@ -3,7 +3,7 @@ from fastapi import HTTPException, APIRouter, Response
 
 # Зависимости — извлекают user_id из токена и создают доступ к БД
 from src.api.dependencies import UserIdDep, DBDep
-
+from src.exceptions import UserAlreadyExistsException
 
 # Pydantic-схемы (валидация и сериализация данных)
 from src.schemas.users import UserRequestAdd, UserAdd
@@ -46,13 +46,14 @@ async def register_user(
     data: UserRequestAdd,  # email и пароль
     db: DBDep,
 ):
-    try:
-        hashed_password = AuthService().pwd_context.hash(data.password)  # Хешируем пароль
-        new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)  # Создаём схему для создания пользователя
-        await db.users.add(new_user_data)  # Добавляем в базу
-        await db.commit()
-    except:  # noqa: E722
-        raise HTTPException(status_code=400)
+    # Проверяем, существует ли пользователь
+    if await db.users.check_user_exists(data.email):
+        raise HTTPException(status_code=400, detail=UserAlreadyExistsException.detail)
+
+    hashed_password = AuthService().pwd_context.hash(data.password)  # Хешируем пароль
+    new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)  # Создаём схему для создания пользователя
+    await db.users.add(new_user_data)  # Добавляем в базу
+    await db.commit()
 
     return {"status": "OK"}
 
