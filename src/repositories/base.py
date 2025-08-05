@@ -82,13 +82,11 @@ class BaseRepository:
 
         await self.session.execute(edit_data_stmt)
 
-    # Метод для удаления объекта
-    async def delete(self, **filter_by):
-        obj = await self.get_one_or_none(**filter_by) # Проверяем, существует ли объект
+    # Метод для удаления объекта из таблицы по переданным параметрам
+    async def delete(self, **filter_by) -> None:
+        # Формируем SQL-запрос на удаление, используя переданные параметры (например: id=1)
+        delete_stmt = delete(self.model).filter_by(**filter_by)
 
-        if obj is None:
-            raise HTTPException(status_code=404, detail="Object not found") # Если нет — ошибка 404
+        # Выполняем запрос на удаление в асинхронной сессии
+        await self.session.execute(delete_stmt)
 
-        delete_data_stmt = delete(self.model).filter_by(**filter_by) # Формируем запрос на удаление
-
-        await self.session.execute(delete_data_stmt)

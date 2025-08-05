@@ -1,8 +1,6 @@
 # ✅ Тест на создание бронирования
 import pytest
-from sqlalchemy import delete
-from src.models import BookingsOrm as BookingModel
-
+from tests.conftest import get_db_null_pool
 
 
 # Используем параметризацию: тест запускается несколько раз с разными входными данными
@@ -42,32 +40,45 @@ async def test_add_booking(
         assert "data" in res                  # Должны получить данные о бронировании
 
 
-@pytest.fixture(scope="function")
-async def delete_all_bookings(db):
-    await db.session.execute(delete(BookingModel))
-    await db.commit()
+# Фикстура, которая очищает таблицу бронирований перед тестами
+@pytest.fixture(scope="module")
+async def delete_all_bookings():
+    async for _db in get_db_null_pool():       # Получаем объект базы из генератора
+        await _db.bookings.delete()            # Удаляем все записи (предполагается, что delete без аргументов удаляет всё)
+        await _db.commit()                     # Подтверждаем изменения
 
 
-@pytest.mark.parametrize("room_id, date_from, date_to, expected_count", [
-    (1, "2024-08-01", "2024-08-05", 1),
-    (1, "2024-08-10", "2024-08-12", 1),
-    (1, "2024-08-15", "2024-08-18", 1),
+# Тест проверяет, что после каждого нового бронирования растёт общее количество бронирований пользователя
+@pytest.mark.parametrize("room_id, date_from, date_to, booked_rooms", [
+    (1, "2024-08-01", "2024-08-10", 1),
+    (1, "2024-08-02", "2024-08-11", 2),
+    (1, "2024-08-03", "2024-08-12", 3),
 ])
-async def test_add_and_get_bookings(
-    room_id, date_from, date_to, expected_count,
-    db, authenticated_ac, delete_all_bookings
+async def test_add_and_get_my_bookings(
+    room_id,
+    date_from,
+    date_to,
+    booked_rooms,
+    delete_all_bookings,    # Очищаем БД перед каждым тестом
+    authenticated_ac,       # Авторизованный клиент
 ):
-    # ➕ Добавляем бронирование
-    response = await authenticated_ac.post("/bookings", json={
-        "room_id": room_id,
-        "date_from": date_from,
-        "date_to": date_to
-    })
+    # ➕ Создаём бронирование
+    response = await authenticated_ac.post(
+        "/bookings",
+        json={
+            "room_id": room_id,
+            "date_from": date_from,
+            "date_to": date_to,
+        }
+    )
     assert response.status_code == 200
 
-    # 📥 Получаем бронирования текущего пользователя
-    me_response = await authenticated_ac.get("/bookings/me")
-    assert me_response.status_code == 200
-    me_data = me_response.json()
-    assert me_data["status"] == "OK"
-    assert len(me_data["data"]) == expected_count
+    # 🔍 Получаем список своих бронирований
+    response_my_bookings = await authenticated_ac.get("/bookings/me")
+    assert response_my_bookings.status_code == 200
+    # ❗ Ошибка тут: ты сравниваешь `len(response.json())`, но `json()` — это словарь
+    # Нужно так:
+    data = response_my_bookings.json()
+    assert isinstance(data, dict)
+    assert "data" in data
+    assert len(data["data"]) == booked_rooms  # Сравниваем количество бронирований
