@@ -19,14 +19,13 @@ class BookingsRepository(BaseRepository):
     # Получить бронирования, у которых заезд сегодня
     async def get_bookings_with_today_checkin(self):
         query = (
-            select(BookingsOrm)
-            .filter(BookingsOrm.date_from == date.today())  # Сравнение даты заезда с сегодняшней датой
+            select(BookingsOrm).filter(
+                BookingsOrm.date_from == date.today()
+            )  # Сравнение даты заезда с сегодняшней датой
         )
         res = await self.session.execute(query)  # Выполнение запроса
         # Преобразование ORM-объектов в доменные сущности через маппер
         return [self.mapper.map_to_domain_entity(booking) for booking in res.scalars().all()]
-
-
 
     async def add_booking(self, data: BookingAdd, hotel_id: int):
         # Получаем SQL-запрос на свободные комнаты в указанный период и отеле

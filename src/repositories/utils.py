@@ -14,8 +14,8 @@ def rooms_ids_for_booking(
     rooms_count = (
         select(BookingsOrm.room_id, func.count("*").label("rooms_booked"))
         .filter(
-            BookingsOrm.date_from <= date_to,   # Заезд до конца выбранного периода
-            BookingsOrm.date_to >= date_from,   # Выезд после начала периода
+            BookingsOrm.date_from <= date_to,  # Заезд до конца выбранного периода
+            BookingsOrm.date_to >= date_from,  # Выезд после начала периода
         )
         .group_by(BookingsOrm.room_id)
         .cte(name="rooms_count")  # Временная таблица
@@ -38,12 +38,9 @@ def rooms_ids_for_booking(
     rooms_ids_for_hotel = rooms_ids_for_hotel.subquery(name="rooms_ids_for_hotel")
 
     # Финальный запрос: только те комнаты, где осталось > 0 мест и они принадлежат нужному отелю
-    rooms_ids_to_get = (
-        select(rooms_left_table.c.room_id)
-        .filter(
-            rooms_left_table.c.rooms_left > 0,
-            rooms_left_table.c.room_id.in_(rooms_ids_for_hotel),
-        )
+    rooms_ids_to_get = select(rooms_left_table.c.room_id).filter(
+        rooms_left_table.c.rooms_left > 0,
+        rooms_left_table.c.room_id.in_(rooms_ids_for_hotel),
     )
 
     return rooms_ids_to_get  # Возвращается именно SQL-запрос, не результат

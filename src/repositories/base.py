@@ -26,29 +26,34 @@ class BaseRepository:
     # Метод для получения всех записей из таблицы
     async def get_filtered(self, *filter, **filtered_by):
         query = (
-            select(self.model)
-            .filter(*filter)
-            .filter_by(**filtered_by)
-        ) # Формируем запрос: SELECT * FROM model с фильтрацией по указанным полям
-        result = await self.session.execute(query) # Выполняем запрос в базе данных
-        return [self.mapper.map_to_domain_entity(model) for model in result.scalars().all()] # Преобразуем каждый результат из ORM в Pydantic-схему
+            select(self.model).filter(*filter).filter_by(**filtered_by)
+        )  # Формируем запрос: SELECT * FROM model с фильтрацией по указанным полям
+        result = await self.session.execute(query)  # Выполняем запрос в базе данных
+        return [
+            self.mapper.map_to_domain_entity(model) for model in result.scalars().all()
+        ]  # Преобразуем каждый результат из ORM в Pydantic-схему
 
     # Асинхронный метод для получения всех записей без фильтрации
     async def get_all(self, *args, **kwargs):
         return await self.get_filtered()
 
-
     # Метод для получения одного объекта по фильтру или None
     async def get_one_or_none(self, **filter_by):
-        query = select(self.model).filter_by(**filter_by) # Формируем запрос с фильтрацией по переданным параметрам
-        result = await self.session.execute(query) # Выполняем запрос
+        query = select(self.model).filter_by(
+            **filter_by
+        )  # Формируем запрос с фильтрацией по переданным параметрам
+        result = await self.session.execute(query)  # Выполняем запрос
         try:
             model = result.scalars().one_or_none()  # Пробуем получить один результат или None
             if model is None:
                 return None
-            return self.mapper.map_to_domain_entity(model) # Валидируем ORM-объект в Pydantic-модель
+            return self.mapper.map_to_domain_entity(
+                model
+            )  # Валидируем ORM-объект в Pydantic-модель
         except MultipleResultsFound:
-            raise HTTPException(status_code=400, detail="Multiple objects found") # Если найдено несколько объектов — выбрасываем ошибку 400
+            raise HTTPException(
+                status_code=400, detail="Multiple objects found"
+            )  # Если найдено несколько объектов — выбрасываем ошибку 400
 
     # Метод для добавления нового объекта
     async def add(self, data: BaseModel):
@@ -62,6 +67,7 @@ class BaseRepository:
         return self.mapper.map_to_domain_entity(model)
 
         # Метод для добавления нового объекта
+
     async def add_bulk(self, data: list[BaseModel]):
         add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
         await self.session.execute(add_data_stmt)
@@ -77,7 +83,9 @@ class BaseRepository:
         edit_data_stmt = (
             update(self.model)
             .filter_by(**filter_by)
-            .values(**data.model_dump(exclude_unset=exclude_unset))  # exclude_unset=True — обновить только переданные поля
+            .values(
+                **data.model_dump(exclude_unset=exclude_unset)
+            )  # exclude_unset=True — обновить только переданные поля
         )
 
         await self.session.execute(edit_data_stmt)
@@ -89,4 +97,3 @@ class BaseRepository:
 
         # Выполняем запрос на удаление в асинхронной сессии
         await self.session.execute(delete_stmt)
-

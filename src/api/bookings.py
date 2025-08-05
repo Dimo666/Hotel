@@ -11,9 +11,9 @@ router = APIRouter(prefix="/bookings", tags=["Бронирования"])
 # Добавление бронирования (POST /bookings)
 @router.post("")
 async def add_booking(
-    user_id: UserIdDep,              # Получаем user_id из токена (авторизованного пользователя)
-    db: DBDep,                       # Зависимость для доступа к базе данных
-    booking_data: BookingAddRequest # Данные, которые прислал клиент (room_id, даты)
+    user_id: UserIdDep,  # Получаем user_id из токена (авторизованного пользователя)
+    db: DBDep,  # Зависимость для доступа к базе данных
+    booking_data: BookingAddRequest,  # Данные, которые прислал клиент (room_id, даты)
 ):
     # Получаем объект комнаты по ID, чтобы узнать её цену
     room = await db.rooms.get_one_or_none(id=booking_data.room_id)
@@ -40,7 +40,6 @@ async def add_booking(
 
     # Возвращаем успешный ответ с данными о бронировании
     return {"status": "OK", "data": booking}
-
 
 
 # Получение всех бронирований (GET /bookings) — для админов

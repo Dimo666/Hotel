@@ -5,15 +5,13 @@ Revises: 85649ad0c61a
 Create Date: 2025-04-22 20:01:14.188142
 
 """
+
 from typing import Sequence, Union
 
 
-
-
-
 # revision identifiers, used by Alembic.
-revision: str = 'ee8132e5d21e'
-down_revision: Union[str, None] = '85649ad0c61a'
+revision: str = "ee8132e5d21e"
+down_revision: Union[str, None] = "85649ad0c61a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

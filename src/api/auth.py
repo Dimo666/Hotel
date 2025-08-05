@@ -19,8 +19,8 @@ router = APIRouter(prefix="/auth", tags=["Авторизация и аутент
 @router.post("/login")
 async def login_user(
     data: UserRequestAdd,  # email и пароль от пользователя
-    response: Response,    # нужен для установки cookie
-    db: DBDep              # зависимость — доступ к репозиториям
+    response: Response,  # нужен для установки cookie
+    db: DBDep,  # зависимость — доступ к репозиториям
 ):
     # Ищем пользователя по email
     user = await db.users.get_user_with_hashed_password(email=data.email)
@@ -44,7 +44,7 @@ async def login_user(
 @router.post("/register")
 async def register_user(
     data: UserRequestAdd,  # email и пароль
-    db: DBDep
+    db: DBDep,
 ):
     try:
         # Хешируем пароль
@@ -56,7 +56,7 @@ async def register_user(
         # Добавляем в базу
         await db.users.add(new_user_data)
         await db.commit()
-    except: # noqa: E722
+    except:  # noqa: E722
         raise HTTPException(status_code=400)
 
     return {"status": "OK"}
@@ -66,7 +66,7 @@ async def register_user(
 @router.get("/me")
 async def get_me(
     user_id: UserIdDep,  # вытаскивается из JWT токена
-    db: DBDep
+    db: DBDep,
 ):
     user = await db.users.get_one_or_none(id=user_id)
     return user
@@ -77,5 +77,3 @@ async def get_me(
 async def logout_user(response: Response):
     response.delete_cookie(key="access_token")
     return {"status": "Вы вышли из системы"}
-
-

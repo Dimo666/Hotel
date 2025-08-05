@@ -3,6 +3,7 @@ import typing
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 from src.database import Base
+
 if typing.TYPE_CHECKING:
     from src.models import FacilitiesOrm
 
@@ -20,6 +21,6 @@ class RoomsOrm(Base):
 
     # Связь many-to-many с удобствами (facilities)
     facilities: Mapped[list["FacilitiesOrm"]] = relationship(
-        back_populates="rooms",          # Обратная связь из FacilitiesOrm
-        secondary="rooms_facilities",    # Промежуточная таблица
+        back_populates="rooms",  # Обратная связь из FacilitiesOrm
+        secondary="rooms_facilities",  # Промежуточная таблица
     )

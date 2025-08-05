@@ -10,12 +10,9 @@ router = APIRouter(prefix="/facilities", tags=["Услуги"])
 
 # Добавление новой услуги (удобства)
 @router.post("")
-async def create_facilities(
-    db: DBDep,
-    facility_data: FacilityAdd = Body()
-):
+async def create_facilities(db: DBDep, facility_data: FacilityAdd = Body()):
     facility = await db.facilities.add(facility_data)  # Добавляем в БД
-    await db.commit()                                  # Подтверждаем транзакцию
+    await db.commit()  # Подтверждаем транзакцию
 
     test_tasks.delay()  # Запускаем фоновую задачу через Celery (необязательно)
 

@@ -7,17 +7,18 @@ from src.database import Base
 if typing.TYPE_CHECKING:
     from src.models import RoomsOrm
 
+
 # Модель удобства (удобства, которые можно выбрать в комнате)
 class FacilitiesOrm(Base):
     __tablename__ = "facilities"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # Уникальный ID удобства
-    title: Mapped[str] = mapped_column(String(100))    # Название удобства (до 100 символов)
+    title: Mapped[str] = mapped_column(String(100))  # Название удобства (до 100 символов)
 
     # Связь many-to-many с комнатами
     rooms: Mapped[list["RoomsOrm"]] = relationship(
-        back_populates="facilities",        # Обратная связь из RoomsOrm
-        secondary="rooms_facilities",       # Промежуточная таблица
+        back_populates="facilities",  # Обратная связь из RoomsOrm
+        secondary="rooms_facilities",  # Промежуточная таблица
     )
 
 

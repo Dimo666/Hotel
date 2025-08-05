@@ -7,6 +7,7 @@ from src.database import async_session_maker_null_pool  # Асинхронный
 from src.tasks.celery_app import celery_instance  # Экземпляр Celery
 from src.utils.db_manager import DBManager  # Менеджер работы с БД
 
+
 # Простейшая задача для теста — "успать" и вывести сообщение
 @celery_instance.task
 def test_tasks():
@@ -18,7 +19,7 @@ def test_tasks():
 @celery_instance.task
 def resize_image(image_path: str):
     sizes = [1000, 500, 200]  # Целевые ширины
-    output_folder = 'src/static/images'  # Папка для сохранения
+    output_folder = "src/static/images"  # Папка для сохранения
 
     img = Image.open(image_path)  # Открываем исходное изображение
 
@@ -28,7 +29,9 @@ def resize_image(image_path: str):
 
     for size in sizes:
         # Подсчитываем пропорциональную высоту и сжимаем изображение
-        img_resized = img.resize((size, int(img.height * (size / img.width))), Image.Resampling.LANCZOS)
+        img_resized = img.resize(
+            (size, int(img.height * (size / img.width))), Image.Resampling.LANCZOS
+        )
 
         # Генерируем новое имя файла
         new_file_name = f"{name}_{size}px{ext}"

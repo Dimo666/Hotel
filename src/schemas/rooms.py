@@ -24,7 +24,9 @@ class RoomAdd(BaseModel):
 class Room(RoomAdd):
     id: int
 
-    model_config = ConfigDict(from_attributes=True)  # Позволяет создавать из ORM-модели через `from_orm()` или `from_attributes()`
+    model_config = ConfigDict(
+        from_attributes=True
+    )  # Позволяет создавать из ORM-модели через `from_orm()` или `from_attributes()`
 
 
 # Комната с подгруженными удобствами (используется в ответах)

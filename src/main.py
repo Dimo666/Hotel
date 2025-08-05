@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI               # Основной класс для FastAPI-приложения
-import uvicorn                            # ASGI-сервер для запуска приложения
+from fastapi import FastAPI  # Основной класс для FastAPI-приложения
+import uvicorn  # ASGI-сервер для запуска приложения
 
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend  # Кеширование через Redis
@@ -11,7 +11,7 @@ from pathlib import Path
 # Добавляем корневую папку в sys.path для корректного импорта
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.init import redis_manager        # Инициализация Redis-соединения
+from src.init import redis_manager  # Инициализация Redis-соединения
 
 # Импортируем роутеры API
 from src.api.hotels import router as router_hotels
@@ -26,9 +26,12 @@ from src.api.images import router as router_images
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await redis_manager.connect()  # Подключение к Redis
-    FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")  # Инициализация кеша
+    FastAPICache.init(
+        RedisBackend(redis_manager.redis), prefix="fastapi-cache"
+    )  # Инициализация кеша
     yield
     await redis_manager.close()  # Отключение от Redis при завершении
+
 
 # Создаём FastAPI-приложение с lifespan
 app = FastAPI(lifespan=lifespan)

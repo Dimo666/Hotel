@@ -1,5 +1,7 @@
 from celery import Celery
-from src.config import settings  # Импорт настроек (где хранится REDIS_URL и другие переменные окружения)
+from src.config import (
+    settings,
+)  # Импорт настроек (где хранится REDIS_URL и другие переменные окружения)
 
 # Создание экземпляра Celery
 # "tasks" — имя приложения Celery
@@ -10,7 +12,7 @@ celery_instance = Celery(
     broker=settings.REDIS_URL,
     include=[
         "src.tasks.tasks",  # Путь к модулю, где определены задачи Celery
-    ]
+    ],
 )
 
 # Конфигурация планировщика задач (beat)

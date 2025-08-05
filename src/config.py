@@ -1,15 +1,19 @@
 from typing import Literal
-from pydantic_settings import BaseSettings, SettingsConfigDict  # Базовый класс и конфиг для загрузки переменных из .env
+from pydantic_settings import (
+    BaseSettings,
+    SettingsConfigDict,
+)  # Базовый класс и конфиг для загрузки переменных из .env
+
 
 # Класс для загрузки и хранения настроек из .env файла
 class Settings(BaseSettings):
     MODE: Literal["TEST", "LOCAL", "DEV", "PROD"]  # Среда запуска приложения
 
-    DB_HOST: str   # Хост базы данных
-    DB_PORT: int   # Порт PostgreSQL
-    DB_USER: str   # Пользователь PostgreSQL
-    DB_PASS: str   # Пароль PostgreSQL
-    DB_NAME: str   # Название базы данных
+    DB_HOST: str  # Хост базы данных
+    DB_PORT: int  # Порт PostgreSQL
+    DB_USER: str  # Пользователь PostgreSQL
+    DB_PASS: str  # Пароль PostgreSQL
+    DB_NAME: str  # Название базы данных
 
     REDIS_HOST: str  # Хост Redis
     REDIS_PORT: int  # Порт Redis
@@ -30,6 +34,7 @@ class Settings(BaseSettings):
 
     # Указываем, что настройки будут загружены из .env файла
     model_config = SettingsConfigDict(env_file=".env")
+
 
 # Создаём глобальный экземпляр настроек
 settings = Settings()

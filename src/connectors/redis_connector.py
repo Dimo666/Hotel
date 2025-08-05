@@ -1,5 +1,6 @@
 import redis.asyncio as redis
 
+
 # Класс для управления асинхронным подключением к Redis
 class RedisManager:
     def __init__(self, host: str, port: int):
@@ -30,6 +31,7 @@ class RedisManager:
     async def close(self):
         if self.redis:
             await self.redis.close()
+
 
 # Пример использования:
 # redis_manager = RedisManager(host="localhost", port=6379)

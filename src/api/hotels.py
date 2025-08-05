@@ -27,7 +27,7 @@ async def get_hotels(
         location=location,
         title=title,
         limit=per_page,
-        offset=per_page * (pagination.page - 1)
+        offset=per_page * (pagination.page - 1),
     )
 
 
@@ -55,7 +55,7 @@ async def create_hotel(
                 "value": {"title": "Отель Дубай 5 у фонтана", "location": "dubai_fountain"},
             },
         }
-    )
+    ),
 ):
     hotel = await db.hotels.add(hotel_data)
     await db.commit()
@@ -88,10 +88,7 @@ async def partially_edit_hotel(
 
 # Удаление отеля
 @router.delete("/{hotel_id}")
-async def delete_hotel(
-    hotel_id: int,
-    db: DBDep
-):
+async def delete_hotel(hotel_id: int, db: DBDep):
     await db.hotels.delete(id=hotel_id)
     await db.commit()
     return {"status": "OK"}
