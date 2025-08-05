@@ -1,29 +1,41 @@
-from fastapi import APIRouter
-
+from fastapi import APIRouter, HTTPException
 
 from src.api.dependencies import DBDep, UserIdDep
+from src.exceptions import ObjectNotFoundException, AllRoomsAreBookedException
 from src.schemas.bookings import BookingAddRequest, BookingAdd
 
 
 router = APIRouter(prefix="/bookings", tags=["Бронирования"])
 
 
-# Добавление бронирования (POST /bookings)
+"""
+    Добавляет новое бронирование комнаты для текущего пользователя.
+
+    Args:
+        user_id (int): ID авторизованного пользователя.
+        db (DBDep): Зависимость для доступа к базе данных.
+        booking_data (BookingAddRequest): Данные о бронировании (room_id, даты).
+
+    Returns:
+        dict: Ответ с данными о бронировании или сообщение об ошибке.
+
+    Raises:
+        HTTPException: Если номер не найден или все номера в отеле заняты.
+    """
+
+
 @router.post("")
 async def add_booking(
     user_id: UserIdDep,  # Получаем user_id из токена (авторизованного пользователя)
     db: DBDep,  # Зависимость для доступа к базе данных
     booking_data: BookingAddRequest,  # Данные, которые прислал клиент (room_id, даты)
 ):
-    # Получаем объект комнаты по ID, чтобы узнать её цену
-    room = await db.rooms.get_one_or_none(id=booking_data.room_id)
-
-    # Получаем отель, к которому принадлежит комната (нужен для проверки доступности)
-    hotel = await db.hotels.get_one_or_none(id=room.hotel_id)
-
-    # Получаем цену комнаты
-    room_price: int = room.price
-
+    try:
+        room = await db.rooms.get_one(id=booking_data.room_id)  # Получаем объект комнаты по ID, чтобы узнать её цену
+    except ObjectNotFoundException:
+        raise HTTPException(status_code=400, detail="Номер не найден")
+    hotel = await db.hotels.get_one(id=room.hotel_id)  # Получаем отель, к которому принадлежит комната (нужен для проверки доступности)
+    room_price: int = room.price  # Получаем цену комнаты
     # Собираем полные данные для бронирования:
     # добавляем user_id и цену, а остальные поля берём из запроса
     _booking_data = BookingAdd(
@@ -31,15 +43,12 @@ async def add_booking(
         price=room_price,
         **booking_data.model_dump(),
     )
-
-    # Добавляем бронирование с учётом доступности комнаты в отеле
-    booking = await db.bookings.add_booking(_booking_data, hotel_id=hotel.id)
-
-    # Сохраняем изменения в базе
-    await db.commit()
-
-    # Возвращаем успешный ответ с данными о бронировании
-    return {"status": "OK", "data": booking}
+    try:
+        booking = await db.bookings.add_booking(_booking_data, hotel_id=hotel.id)  # Добавляем бронирование с учётом доступности комнаты в отеле
+    except AllRoomsAreBookedException as ex:
+        raise HTTPException(status_code=400, detail=ex.detail)
+    await db.commit()  # Сохраняем изменения в базе
+    return {"status": "OK", "data": booking}  # Возвращаем успешный ответ с данными о бронировании
 
 
 # Получение всех бронирований (GET /bookings) — для админов

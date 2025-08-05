@@ -24,11 +24,7 @@ class HotelsRepository(BaseRepository):
         rooms_ids_to_get = rooms_ids_for_booking(date_from=date_from, date_to=date_to)
 
         # Получаем ID отелей, у которых есть эти свободные комнаты
-        hotels_ids_to_get = (
-            select(RoomsOrm.hotel_id)
-            .select_from(RoomsOrm)
-            .filter(RoomsOrm.id.in_(rooms_ids_to_get))
-        )
+        hotels_ids_to_get = select(RoomsOrm.hotel_id).select_from(RoomsOrm).filter(RoomsOrm.id.in_(rooms_ids_to_get))
 
         # Основной запрос к таблице отелей
         query = select(HotelsOrm).filter(HotelsOrm.id.in_(hotels_ids_to_get))

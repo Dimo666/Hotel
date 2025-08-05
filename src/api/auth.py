@@ -47,14 +47,9 @@ async def register_user(
     db: DBDep,
 ):
     try:
-        # Хешируем пароль
-        hashed_password = AuthService().pwd_context.hash(data.password)
-
-        # Создаём схему для создания пользователя
-        new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)
-
-        # Добавляем в базу
-        await db.users.add(new_user_data)
+        hashed_password = AuthService().pwd_context.hash(data.password)  # Хешируем пароль
+        new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)  # Создаём схему для создания пользователя
+        await db.users.add(new_user_data)  # Добавляем в базу
         await db.commit()
     except:  # noqa: E722
         raise HTTPException(status_code=400)

@@ -29,9 +29,7 @@ def resize_image(image_path: str):
 
     for size in sizes:
         # Подсчитываем пропорциональную высоту и сжимаем изображение
-        img_resized = img.resize(
-            (size, int(img.height * (size / img.width))), Image.Resampling.LANCZOS
-        )
+        img_resized = img.resize((size, int(img.height * (size / img.width))), Image.Resampling.LANCZOS)
 
         # Генерируем новое имя файла
         new_file_name = f"{name}_{size}px{ext}"

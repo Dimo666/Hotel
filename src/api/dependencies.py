@@ -27,9 +27,7 @@ def get_token(request: Request) -> str:
 
 # Раскодировка токена и получение user_id
 def get_current_user_id(token: str = Depends(get_token)) -> int:
-    data = AuthService().decode_token(
-        token
-    )  # ⚠️ должно быть decode_token, если ты хочешь извлечь payload
+    data = AuthService().decode_token(token)  # ⚠️ должно быть decode_token, если ты хочешь извлечь payload
     return data["user_id"]
 
 

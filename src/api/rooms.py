@@ -17,9 +17,7 @@ async def get_rooms(
     date_from: date = Query(example="2024-08-01"),
     date_to: date = Query(example="2024-08-10"),
 ):
-    return await db.rooms.get_filtered_by_time(
-        hotel_id=hotel_id, date_from=date_from, date_to=date_to
-    )
+    return await db.rooms.get_filtered_by_time(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
 
 
 # Получение одной комнаты с её связями
@@ -36,9 +34,7 @@ async def create_room(hotel_id: int, db: DBDep, room_data: RoomAddRequest = Body
     room = await db.rooms.add(_room_data)
 
     # Создаём список связей комната-удобства
-    rooms_facilities_data = [
-        RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids
-    ]
+    rooms_facilities_data = [RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids]
     await db.rooms_facilities.add_bulk(rooms_facilities_data)
     await db.commit()  # Подтверждаем транзакцию
 
@@ -67,9 +63,7 @@ async def partially_edit_room(hotel_id: int, room_id: int, room_data: RoomPatchR
 
     # Если передан список удобств — обновим связи
     if "facilities_ids" in _room_data_dict:
-        await db.rooms_facilities.set_room_facilities(
-            room_id, facilities_ids=_room_data_dict["facilities_ids"]
-        )
+        await db.rooms_facilities.set_room_facilities(room_id, facilities_ids=_room_data_dict["facilities_ids"])
 
     await db.commit()
     return {"status": "OK"}

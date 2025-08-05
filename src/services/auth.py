@@ -20,9 +20,7 @@ class AuthService:
     # Метод для создания JWT access-токена
     def create_access_token(self, data: dict) -> str:
         to_encode = data.copy()  # Делаем копию переданного словаря (чтобы не изменять оригинал)
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         # Добавляем в данные срок жизни токена (ключ "exp")
         to_encode.update({"exp": expire})
         # Кодируем токен с использованием секретного ключа и алгоритма
