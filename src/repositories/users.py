@@ -9,7 +9,7 @@ from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import UserDataMapper
 
 # Импортируем схемы пользователя
-from src.schemas.users import User, UserWithHashedPassword
+from src.schemas.users import UserWithHashedPassword
 
 # Импортируем функцию для составления SQL-запросов
 from sqlalchemy import select

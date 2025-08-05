@@ -1,6 +1,5 @@
-from src.database import async_session_maker_null_pool  # Фабрика асинхронных сессий SQLAlchemy
 from src.schemas.hotels import HotelAdd       # Pydantic-схема для добавления отеля
-from src.utils.db_manager import DBManager    # Контекстный менеджер для работы с БД
+
 
 # Асинхронный тест добавления отеля
 async def test_add_hotel(db):

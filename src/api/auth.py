@@ -4,11 +4,6 @@ from fastapi import HTTPException, APIRouter, Response
 # Зависимости — извлекают user_id из токена и создают доступ к БД
 from src.api.dependencies import UserIdDep, DBDep
 
-# Асинхронный сессионный фабрикатор (если нужно вручную управлять сессией)
-from src.database import async_session_maker
-
-# Репозиторий для работы с пользователями (CRUD)
-from src.repositories.users import UsersRepository
 
 # Pydantic-схемы (валидация и сериализация данных)
 from src.schemas.users import UserRequestAdd, UserAdd
@@ -61,7 +56,7 @@ async def register_user(
         # Добавляем в базу
         await db.users.add(new_user_data)
         await db.commit()
-    except:
+    except: # noqa: E722
         raise HTTPException(status_code=400)
 
     return {"status": "OK"}

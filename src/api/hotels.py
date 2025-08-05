@@ -3,7 +3,7 @@ from fastapi_cache.decorator import cache
 from fastapi import APIRouter, Body, Query
 
 from src.api.dependencies import PaginationDep, DBDep
-from src.schemas.hotels import Hotel, HotelPatch, HotelAdd
+from src.schemas.hotels import HotelPatch, HotelAdd
 
 # Роутер для работы с отелями
 router = APIRouter(prefix="/hotels", tags=["Отели"])

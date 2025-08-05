@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 import json
 from unittest import mock
 
@@ -23,7 +24,7 @@ from src.database import Base, engine_null_pool, async_session_maker_null_pool
 # Импорт приложения FastAPI
 from src.main import app
 # Импорт всех моделей (чтобы Base.metadata знала о всех таблицах)
-from src.models import *
+from src.models import * #noqa
 # Схемы для отелей и номеров
 from src.schemas.hotels import HotelAdd
 from src.schemas.rooms import RoomAdd

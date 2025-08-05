@@ -9,7 +9,7 @@ from src.config import settings
 from src.database import Base # Базовый класс
 
 # Модели Добавление!!!!!!!!
-from src.models import *
+from src.models import * #noqa: F403
 
 
 
