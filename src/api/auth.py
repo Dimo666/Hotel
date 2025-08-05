@@ -51,15 +51,18 @@ async def register_user(
     data: UserRequestAdd,  # email и пароль
     db: DBDep
 ):
-    # Хешируем пароль
-    hashed_password = AuthService().pwd_context.hash(data.password)
+    try:
+        # Хешируем пароль
+        hashed_password = AuthService().pwd_context.hash(data.password)
 
-    # Создаём схему для создания пользователя
-    new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)
+        # Создаём схему для создания пользователя
+        new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)
 
-    # Добавляем в базу
-    await db.users.add(new_user_data)
-    await db.commit()
+        # Добавляем в базу
+        await db.users.add(new_user_data)
+        await db.commit()
+    except:
+        raise HTTPException(status_code=400)
 
     return {"status": "OK"}
 
