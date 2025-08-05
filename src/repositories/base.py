@@ -1,82 +1,127 @@
-# Импортируем базовую модель Pydantic
+from asyncpg import UniqueViolationError
 from pydantic import BaseModel
-
-# Импортируем SQL-операторы для работы с базой данных
 from sqlalchemy import select, insert, update, delete
+from sqlalchemy.exc import NoResultFound, IntegrityError
 
-# Импортируем исключение, которое возникает при нахождении нескольких результатов вместо одного
-from sqlalchemy.exc import NoResultFound
-
-from src.exceptions import ObjectNotFoundException
-
-# Дата-маппер
+from src.exceptions import ObjectNotFoundException, ObjectAlreadyExistsException
 from src.repositories.mappers.base import DataMapper
 
 
-# Базовый репозиторий для работы с любыми моделями
 class BaseRepository:
-    # Переменные класса, которые потом будут переопределяться в наследниках
-    model = None  # ORM-модель SQLAlchemy
-    mapper: DataMapper = None
+    """
+    Базовый репозиторий для CRUD-операций с любой SQLAlchemy моделью.
+    Используется во всех сервисах, чтобы не дублировать код.
+    """
 
-    # При создании репозитория передаём ему активную сессию с базой данных
+    model = None  # SQLAlchemy ORM-модель
+    mapper: DataMapper = None  # Маппер ORM → Pydantic
+
     def __init__(self, session):
+        """
+        Инициализация репозитория с сессией SQLAlchemy.
+        """
         self.session = session
 
-    # Метод для получения всех записей из таблицы
     async def get_filtered(self, *filter, **filtered_by):
-        query = select(self.model).filter(*filter).filter_by(**filtered_by)  # Формируем запрос: SELECT * FROM model с фильтрацией по указанным полям
-        result = await self.session.execute(query)  # Выполняем запрос в базе данных
-        return [self.mapper.map_to_domain_entity(model) for model in result.scalars().all()]  # Преобразуем каждый результат из ORM в Pydantic-схему
+        """
+        Получение списка записей по фильтрам.
 
-    # Асинхронный метод для получения всех записей без фильтрации
+        :param filter: SQLAlchemy фильтры
+        :param filtered_by: именованные фильтры (например, id=1)
+        :return: список Pydantic-моделей
+        """
+        query = select(self.model).filter(*filter).filter_by(**filtered_by)
+        result = await self.session.execute(query)
+        return [self.mapper.map_to_domain_entity(model) for model in result.scalars().all()]
+
     async def get_all(self, *args, **kwargs):
+        """
+        Получение всех записей таблицы.
+        """
         return await self.get_filtered()
 
-    # Метод для получения одного объекта по фильтру или None
     async def get_one_or_none(self, **filter_by):
-        query = select(self.model).filter_by(**filter_by)  # Формируем запрос с фильтрацией по переданным параметрам
-        result = await self.session.execute(query)  # Выполняем запрос
-        model = result.scalars().one_or_none()  # Пробуем получить один результат или None
+        """
+        Получение одного объекта или None по фильтру.
+
+        :param filter_by: параметры фильтрации (например, id=1)
+        :return: Pydantic-модель или None
+        """
+        query = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        model = result.scalars().one_or_none()
         if model is None:
             return None
-        return self.mapper.map_to_domain_entity(model)  # Валидируем ORM-объект в Pydantic-модель
-
-    async def get_one(self, **filter_by):
-        query = select(self.model).filter_by(**filter_by)  # Формируем запрос с фильтрацией по переданным параметрам
-        result = await self.session.execute(query)  # Выполняем запрос
-        try:
-            model = result.scalars_one()  # Получаем один результат
-        except NoResultFound:
-            raise ObjectNotFoundException
-        return self.mapper.map_to_domain_entity(model)  # Валидируем ORM-объект в Pydantic-модель
-
-    # Метод для добавления нового объекта
-    async def add(self, data: BaseModel):
-        add_data_stmt = (  # Формируем запрос на вставку записи
-            insert(self.model)
-            .values(**data.model_dump())  # Преобразуем Pydantic-объект в dict
-            .returning(self.model)  # Возвращаем добавленный объект
-        )
-        result = await self.session.execute(add_data_stmt)
-        model = result.scalars().one()
         return self.mapper.map_to_domain_entity(model)
 
-    # Метод для добавления нового объекта
+    async def get_one(self, **filter_by):
+        """
+        Получение одного объекта по фильтру. Если не найден — исключение.
+
+        :param filter_by: параметры фильтрации (например, id=1)
+        :raises ObjectNotFoundException: если объект не найден
+        :return: Pydantic-модель
+        """
+        query = select(self.model).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        try:
+            model = result.scalar_one()
+        except NoResultFound:
+            raise ObjectNotFoundException
+        return self.mapper.map_to_domain_entity(model)
+
+    async def add(self, data: BaseModel):
+        """
+        Добавление нового объекта в БД.
+
+        :param data: Pydantic-модель
+        :raises ObjectAlreadyExistsException: при конфликте уникальности
+        :return: созданный объект (Pydantic)
+        """
+        try:
+            add_data_stmt = (
+                insert(self.model)
+                .values(**data.model_dump())
+                .returning(self.model)
+            )
+            result = await self.session.execute(add_data_stmt)
+            model = result.scalars().one()
+            return self.mapper.map_to_domain_entity(model)
+        except IntegrityError as ex:
+            if isinstance(ex.orig.__cause__, UniqueViolationError):
+                raise ObjectAlreadyExistsException from ex
+            raise ex
+
     async def add_bulk(self, data: list[BaseModel]):
+        """
+        Массовое добавление объектов в БД.
+
+        :param data: список Pydantic-моделей
+        """
         add_data_stmt = insert(self.model).values([item.model_dump() for item in data])
         await self.session.execute(add_data_stmt)
 
-    # Метод для редактирования объекта
     async def edit(self, data, exclude_unset: bool = False, **filter_by):
-        await self.get_one_or_none(**filter_by)  # Проверяем, существует ли объект по фильтру
-        # Формируем запрос на обновление данных
+        """
+        Обновление существующего объекта.
+
+        :param data: Pydantic-модель с новыми данными
+        :param exclude_unset: обновлять только переданные поля (для PATCH)
+        :param filter_by: параметры для поиска объекта
+        """
+        await self.get_one_or_none(**filter_by)  # Проверка наличия
         edit_data_stmt = (
-            update(self.model).filter_by(**filter_by).values(**data.model_dump(exclude_unset=exclude_unset))  # exclude_unset=True — обновить только переданные поля
+            update(self.model)
+            .filter_by(**filter_by)
+            .values(**data.model_dump(exclude_unset=exclude_unset))
         )
         await self.session.execute(edit_data_stmt)
 
-    # Метод для удаления объекта из таблицы по переданным параметрам
-    async def delete(self, **filter_by) -> None:
-        delete_stmt = delete(self.model).filter_by(**filter_by) # Формируем SQL-запрос на удаление, используя переданные параметры (например: id=1)
-        await self.session.execute(delete_stmt) # Выполняем запрос на удаление в асинхронной сессии
+    async def delete(self, **filter_by):
+        """
+        Удаление объекта по фильтру.
+
+        :param filter_by: параметры фильтрации (например, id=1)
+        """
+        delete_stmt = delete(self.model).filter_by(**filter_by)
+        await self.session.execute(delete_stmt)

@@ -1,50 +1,47 @@
 # Импортируем EmailStr для валидации email'ов
 from pydantic import EmailStr
 
-from src.exceptions import UserAlreadyExistsException
-# Импортируем ORM-модель пользователя
 from src.models.users import UsersOrm
-
-# Импортируем базовый репозиторий с общими методами для работы с БД
 from src.repositories.base import BaseRepository
 from src.repositories.mappers.mappers import UserDataMapper
-
-# Импортируем схемы пользователя
 from src.schemas.users import UserWithHashedPassword, UserAdd
 
-# Импортируем функцию для составления SQL-запросов
 from sqlalchemy import select
 
 
-# Репозиторий для работы с пользователями, наследуется от общего BaseRepository
 class UsersRepository(BaseRepository):
-    # Указываем, с какой моделью БД работает этот репозиторий
+    """
+    Репозиторий для работы с пользователями. Используется для обращения к таблице users.
+
+    Наследуется от BaseRepository и переопределяет:
+    - модель ORM (UsersOrm)
+    - маппер (UserDataMapper)
+    """
+
     model = UsersOrm
-    # И с какой схемой он работает на уровне Python-объектов
     mapper = UserDataMapper
 
-    # Метод для получения пользователя по email с хешированным паролем
-    async def get_user_with_hashed_password(self, email: EmailStr):
-        # Создаём запрос: выбираем пользователя, у которого email совпадает
+    async def get_user_with_hashed_password(self, email: EmailStr) -> UserWithHashedPassword:
+        """
+        Получение пользователя по email, включая хеш пароля.
+
+        Этот метод используется при логине:
+        - Ищем пользователя по email
+        - Получаем ORM-объект
+        - Преобразуем в схему `UserWithHashedPassword` (содержит email, id, hashed_password)
+
+        :param email: Email пользователя (типизированный EmailStr)
+        :raises sqlalchemy.exc.NoResultFound: если пользователь не найден
+        :return: Pydantic-модель UserWithHashedPassword
+        """
+        # SELECT * FROM users WHERE email = :email
         query = select(self.model).filter_by(email=email)
 
-        # Выполняем запрос в асинхронной сессии
+        # Выполняем SQL-запрос
         result = await self.session.execute(query)
 
-        # Получаем одну запись (ожидаем, что email уникальный и вернётся ровно один пользователь)
+        # Получаем одну запись — ожидаем, что email уникальный
         model = result.scalars().one()
 
-        # Валидируем ORM-объект в Pydantic-схему UserWithHashedPassword
+        # Конвертируем ORM → Pydantic с полем hashed_password
         return UserWithHashedPassword.model_validate(model)
-
-    async def check_user_exists(self, email: EmailStr) -> bool:
-        query = select(self.model).filter_by(email=email)
-        result = await self.session.execute(query)
-        return result.scalar_one_or_none() is not None
-
-
-    async def add(self, data: UserAdd):
-        # Проверка: существует ли пользователь с таким email
-        if await self.check_user_exists(data.email):
-            raise UserAlreadyExistsException()
-        return await super().add(data)

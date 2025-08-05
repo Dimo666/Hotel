@@ -3,38 +3,56 @@ from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict,
 )  # Базовый класс и конфиг для загрузки переменных из .env
+from pydantic import BaseSettings
+from typing import Literal
+from pydantic_settings import SettingsConfigDict
 
 
-# Класс для загрузки и хранения настроек из .env файла
 class Settings(BaseSettings):
-    MODE: Literal["TEST", "LOCAL", "DEV", "PROD"]  # Среда запуска приложения
+    """
+    Класс для загрузки и хранения настроек из .env файла.
 
-    DB_HOST: str  # Хост базы данных
-    DB_PORT: int  # Порт PostgreSQL
-    DB_USER: str  # Пользователь PostgreSQL
-    DB_PASS: str  # Пароль PostgreSQL
-    DB_NAME: str  # Название базы данных
+    Используется для управления конфигурацией приложения (БД, Redis, JWT и т.д.).
+    Все значения автоматически подтягиваются из переменных окружения.
+    """
 
-    REDIS_HOST: str  # Хост Redis
-    REDIS_PORT: int  # Порт Redis
+    # ▶️ Режим запуска приложения
+    MODE: Literal["TEST", "LOCAL", "DEV", "PROD"]
+
+    # 📦 Параметры подключения к PostgreSQL
+    DB_HOST: str
+    DB_PORT: int
+    DB_USER: str
+    DB_PASS: str
+    DB_NAME: str
+
+    # ⚡ Параметры подключения к Redis
+    REDIS_HOST: str
+    REDIS_PORT: int
 
     @property
     def REDIS_URL(self) -> str:
-        # Собираем URL подключения к Redis
+        """
+        Сформированный URL подключения к Redis.
+        """
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
     @property
     def DB_URL(self) -> str:
-        # Собираем строку подключения к PostgreSQL через asyncpg
+        """
+        Сформированный URL подключения к PostgreSQL (через asyncpg).
+        Используется в create_async_engine().
+        """
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    JWT_SECRET_KEY: str  # Секретный ключ для подписи JWT токенов
-    ALGORITHM: str  # Алгоритм подписи JWT (например, HS256)
-    ACCESS_TOKEN_EXPIRE_MINUTES: int  # Время жизни access-токена в минутах
+    # 🔐 JWT-настройки
+    JWT_SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int  # Время жизни токена в минутах
 
-    # Указываем, что настройки будут загружены из .env файла
+    # 📄 Загрузка переменных из файла .env в корне проекта
     model_config = SettingsConfigDict(env_file=".env")
 
 
-# Создаём глобальный экземпляр настроек
+# 📌 Глобальный доступ к настройкам проекта
 settings = Settings()

@@ -1,8 +1,8 @@
 from datetime import date
 
-from fastapi import APIRouter, Body, Query, HTTPException
+from fastapi import APIRouter, Body, Query
 from src.api.dependencies import DBDep
-from src.exceptions import InvalidDateRangeException, NoRoomsFoundException
+from src.exceptions import check_dete_to_after_date_from, ObjectNotFoundException, RoomNotFoundException, HotelNotFoundException
 from src.schemas.facilities import RoomFacilityAdd
 from src.schemas.rooms import RoomAdd, RoomAddRequest, RoomPatchRequest, RoomPatch
 
@@ -10,48 +10,94 @@ from src.schemas.rooms import RoomAdd, RoomAddRequest, RoomPatchRequest, RoomPat
 router = APIRouter(prefix="/hotels", tags=["Номера"])
 
 
-# Получение списка комнат отеля по диапазону дат
 @router.get("/{hotel_id}/rooms")
 async def get_rooms(
     hotel_id: int,
-    db: DBDep,  # Зависимость: доступ к базе данных
+    db: DBDep,
     date_from: date = Query(example="2024-08-01"),
     date_to: date = Query(example="2024-08-10"),
 ):
-    try:
-        return await db.rooms.get_filtered_by_time(
-            hotel_id=hotel_id,
-            date_from=date_from,
-            date_to=date_to,
-        )
-    except (InvalidDateRangeException, NoRoomsFoundException) as ex:
-        raise HTTPException(status_code=400, detail=ex.detail)
+    """
+    Получение списка свободных комнат в отеле по диапазону дат.
+
+    :param hotel_id: ID отеля
+    :param db: доступ к БД
+    :param date_from: дата заезда
+    :param date_to: дата выезда
+    :return: список комнат
+    """
+    check_dete_to_after_date_from(date_from, date_to)
+    return await db.rooms.get_filtered_by_time(
+        hotel_id=hotel_id,
+        date_from=date_from,
+        date_to=date_to,
+    )
 
 
-# Получение одной комнаты с её связями
 @router.get("/{hotel_id}/rooms/{room_id}")
 async def get_room(hotel_id: int, room_id: int, db: DBDep):
-    return await db.rooms.get_one_or_none_with_rels(id=room_id, hotel_id=hotel_id)
+    """
+    Получение информации о комнате вместе с удобствами.
+
+    :param hotel_id: ID отеля
+    :param room_id: ID комнаты
+    :param db: доступ к БД
+    :raises RoomNotFoundException: если комната не найдена
+    :return: объект комнаты
+    """
+    room = await db.rooms.get_one_or_none_with_rels(id=hotel_id)
+    if not room:
+        raise RoomNotFoundException
 
 
-# Создание новой комнаты и связей с удобствами
 @router.post("/{hotel_id}/rooms")
 async def create_room(hotel_id: int, db: DBDep, room_data: RoomAddRequest = Body()):
-    # Преобразуем входные данные в схему RoomAdd
+    """
+    Создание новой комнаты и связей с удобствами.
+
+    :param hotel_id: ID отеля
+    :param db: доступ к БД
+    :param room_data: данные о комнате и список ID удобств
+    :raises HotelNotFoundException: если отель не найден
+    :return: статус и созданная комната
+    """
+    try:
+        await db.hotels.get_one(id=hotel_id)
+    except ObjectNotFoundException:
+        raise HotelNotFoundException
+
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     room = await db.rooms.add(_room_data)
 
-    # Создаём список связей комната-удобства
     rooms_facilities_data = [RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids]
     await db.rooms_facilities.add_bulk(rooms_facilities_data)
-    await db.commit()  # Подтверждаем транзакцию
+    await db.commit()
 
     return {"status": "OK", "data": room}
 
 
-# Полное обновление данных комнаты
 @router.put("/{hotel_id}/rooms/{room_id}")
 async def edit_room(hotel_id: int, room_id: int, room_data: RoomAddRequest, db: DBDep):
+    """
+    Полное обновление данных комнаты.
+
+    :param hotel_id: ID отеля
+    :param room_id: ID комнаты
+    :param room_data: новые данные
+    :raises HotelNotFoundException: если отель не найден
+    :raises RoomNotFoundException: если комната не найдена
+    :return: статус
+    """
+    try:
+        await db.hotels.get_one(id=hotel_id)
+    except ObjectNotFoundException:
+        raise HotelNotFoundException
+
+    try:
+        await db.rooms.get_one(id=hotel_id)
+    except ObjectNotFoundException:
+        raise RoomNotFoundException
+
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     await db.rooms.edit(_room_data, id=room_id)
     await db.rooms_facilities.set_room_facilities(room_id, facilities_ids=room_data.facilities_ids)
@@ -59,17 +105,33 @@ async def edit_room(hotel_id: int, room_id: int, room_data: RoomAddRequest, db: 
     return {"status": "OK"}
 
 
-# Частичное обновление данных комнаты
 @router.patch("/{hotel_id}/rooms/{room_id}")
 async def partially_edit_room(hotel_id: int, room_id: int, room_data: RoomPatchRequest, db: DBDep):
-    # Получаем только переданные (не пустые) поля
+    """
+    Частичное обновление данных комнаты.
+
+    :param hotel_id: ID отеля
+    :param room_id: ID комнаты
+    :param room_data: изменяемые поля и удобства
+    :raises HotelNotFoundException: если отель не найден
+    :raises RoomNotFoundException: если комната не найдена
+    :return: статус
+    """
+    try:
+        await db.hotels.get_one(id=hotel_id)
+    except ObjectNotFoundException:
+        raise HotelNotFoundException
+
+    try:
+        await db.rooms.get_one(id=hotel_id)
+    except ObjectNotFoundException:
+        raise RoomNotFoundException
+
     _room_data_dict = room_data.model_dump(exclude_unset=True)
     _room_data = RoomPatch(hotel_id=hotel_id, **_room_data_dict)
 
-    # Обновляем только переданные поля
     await db.rooms.edit(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
 
-    # Если передан список удобств — обновим связи
     if "facilities_ids" in _room_data_dict:
         await db.rooms_facilities.set_room_facilities(room_id, facilities_ids=_room_data_dict["facilities_ids"])
 
@@ -77,9 +139,27 @@ async def partially_edit_room(hotel_id: int, room_id: int, room_data: RoomPatchR
     return {"status": "OK"}
 
 
-# Удаление комнаты
 @router.delete("/{hotel_id}/rooms/{room_id}")
 async def delete_room(hotel_id: int, room_id: int, db: DBDep):
+    """
+    Удаление комнаты из отеля.
+
+    :param hotel_id: ID отеля
+    :param room_id: ID комнаты
+    :raises HotelNotFoundException: если отель не найден
+    :raises RoomNotFoundException: если комната не найдена
+    :return: статус
+    """
+    try:
+        await db.hotels.get_one(id=hotel_id)
+    except ObjectNotFoundException:
+        raise HotelNotFoundException
+
+    try:
+        await db.rooms.get_one(id=hotel_id)
+    except ObjectNotFoundException:
+        raise RoomNotFoundException
+
     await db.rooms.delete(id=room_id, hotel_id=hotel_id)
     await db.commit()
     return {"status": "OK"}
