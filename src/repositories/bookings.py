@@ -1,4 +1,7 @@
 from datetime import date
+from fastapi import HTTPException
+
+
 from sqlalchemy import select
 
 
@@ -46,4 +49,4 @@ class BookingsRepository(BaseRepository):
             return new_booking
         else:
             # Если нет — выбрасываем исключение (ошибка: комната занята)
-            raise Exception("Комната недоступна для бронирования на указанные даты.")
+            raise HTTPException(500)

@@ -1,7 +1,9 @@
 from fastapi import APIRouter
-from src.api.dependencies import DBDep, UserIdDep
-from src.schemas.bookings import BookingAddRequest, BookingAdd
+from sqlalchemy import delete
 
+from src.api.dependencies import DBDep, UserIdDep
+from src.schemas.bookings import BookingAddRequest, BookingAdd, Booking
+import pytest
 
 router = APIRouter(prefix="/bookings", tags=["Бронирования"])
 
