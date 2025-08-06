@@ -1,11 +1,5 @@
 from typing import Literal
-from pydantic_settings import (
-    BaseSettings,
-    SettingsConfigDict,
-)  # Базовый класс и конфиг для загрузки переменных из .env
-from pydantic import BaseSettings
-from typing import Literal
-from pydantic_settings import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):

@@ -58,4 +58,3 @@ def rooms_ids_for_booking(
     )
 
     return rooms_ids_to_get  # Возвращаем сам SQL-запрос (не выполняем его)
-

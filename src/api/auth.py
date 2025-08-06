@@ -17,9 +17,9 @@ router = APIRouter(prefix="/auth", tags=["Авторизация и аутент
 
 @router.post("/login")
 async def login_user(
-    data: UserRequestAdd,       # Входные данные от пользователя (email и пароль)
-    response: Response,         # Ответ, чтобы установить cookie
-    db: DBDep,                  # Доступ к репозиториям
+    data: UserRequestAdd,  # Входные данные от пользователя (email и пароль)
+    response: Response,  # Ответ, чтобы установить cookie
+    db: DBDep,  # Доступ к репозиториям
 ):
     """
     Авторизация пользователя.
@@ -104,4 +104,3 @@ async def logout_user(response: Response):
     """
     response.delete_cookie(key="access_token")
     return {"status": "Вы вышли из системы"}
-

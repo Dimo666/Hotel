@@ -22,7 +22,6 @@ class HotelsRepository(BaseRepository):
         limit: int = 10,
         offset: int = 0,
     ):
-
         # Получаем ID свободных комнат
         rooms_ids_to_get = rooms_ids_for_booking(date_from=date_from, date_to=date_to)
 

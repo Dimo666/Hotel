@@ -15,6 +15,7 @@ class PaginationParams(BaseModel):
     - page: номер страницы (по умолчанию 1, минимум 1)
     - per_page: сколько объектов на странице (необязательный, максимум 30)
     """
+
     page: Annotated[int | None, Query(1, ge=1)]
     per_page: Annotated[int | None, Query(None, ge=1, lt=30)]
 

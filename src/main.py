@@ -5,11 +5,14 @@ import uvicorn  # ASGI-сервер для запуска приложения
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend  # Кеширование через Redis
 
+import logging
 import sys
 from pathlib import Path
 
 # Добавляем корневую папку в sys.path для корректного импорта
 sys.path.append(str(Path(__file__).parent.parent))
+
+logging.basicConfig(level=logging.DEBUG)
 
 from src.init import redis_manager  # Инициализация Redis-соединения
 
@@ -27,6 +30,7 @@ from src.api.images import router as router_images
 async def lifespan(app: FastAPI):
     await redis_manager.connect()  # Подключение к Redis
     FastAPICache.init(RedisBackend(redis_manager.redis), prefix="fastapi-cache")  # Инициализация кеша
+    logging.info("FastApi cache initialized")
     yield
     await redis_manager.close()  # Отключение от Redis при завершении
 

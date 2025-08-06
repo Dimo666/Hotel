@@ -1,3 +1,4 @@
+import logging
 from asyncpg import UniqueViolationError
 from pydantic import BaseModel
 from sqlalchemy import select, insert, update, delete
@@ -79,18 +80,17 @@ class BaseRepository:
         :return: созданный объект (Pydantic)
         """
         try:
-            add_data_stmt = (
-                insert(self.model)
-                .values(**data.model_dump())
-                .returning(self.model)
-            )
+            add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
             result = await self.session.execute(add_data_stmt)
             model = result.scalars().one()
             return self.mapper.map_to_domain_entity(model)
         except IntegrityError as ex:
+            logging.error(f"Не удалось добавить данные в ББ, входные данные:{data} тип ошибки:{type(ex.orig.__cause__)=}")
             if isinstance(ex.orig.__cause__, UniqueViolationError):
                 raise ObjectAlreadyExistsException from ex
-            raise ex
+            else:
+                logging.error(f"Не знакомая ошибка: тип ошибки:{type(ex.orig.__cause__)=}")
+                raise ex
 
     async def add_bulk(self, data: list[BaseModel]):
         """
@@ -110,11 +110,7 @@ class BaseRepository:
         :param filter_by: параметры для поиска объекта
         """
         await self.get_one_or_none(**filter_by)  # Проверка наличия
-        edit_data_stmt = (
-            update(self.model)
-            .filter_by(**filter_by)
-            .values(**data.model_dump(exclude_unset=exclude_unset))
-        )
+        edit_data_stmt = update(self.model).filter_by(**filter_by).values(**data.model_dump(exclude_unset=exclude_unset))
         await self.session.execute(edit_data_stmt)
 
     async def delete(self, **filter_by):

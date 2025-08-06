@@ -6,6 +6,7 @@ class BaseClassException(Exception):
     """
     Базовое исключение для пользовательских ошибок приложения.
     """
+
     detail = "Неожиданная ошибка"
 
     def __init__(self, *args, **kwargs):
@@ -16,6 +17,7 @@ class ObjectNotFoundException(BaseClassException):
     """
     Исключение, если объект не найден.
     """
+
     detail = "Обьект не найден"
 
 
@@ -23,6 +25,7 @@ class ObjectAlreadyExistsException(BaseClassException):
     """
     Исключение, если объект уже существует.
     """
+
     detail = "Похожий обьект уже существует"
 
 
@@ -30,6 +33,7 @@ class AllRoomsAreBookedException(BaseClassException):
     """
     Исключение, если все номера уже забронированы.
     """
+
     detail = "Не осталось свободных номеров"
 
 
@@ -37,6 +41,7 @@ class UserAlreadyExistsException(BaseClassException):
     """
     Исключение, если пользователь уже существует.
     """
+
     detail = "Пользователь уже существует"
 
 
@@ -56,6 +61,7 @@ class BaseClassHTTPException(HTTPException):
     """
     Базовый класс HTTP-исключений с предустановленным статусом и сообщением.
     """
+
     status_code = 500
     detail = None
 
@@ -67,6 +73,7 @@ class HotelNotFoundException(BaseClassHTTPException):
     """
     HTTP-исключение, если отель не найден.
     """
+
     status_code = 404
     detail = "Отель не найден"
 
@@ -75,10 +82,6 @@ class RoomNotFoundException(BaseClassHTTPException):
     """
     HTTP-исключение, если номер не найден.
     """
+
     status_code = 404
     detail = "Номер не найден"
-
-
-
-
-
