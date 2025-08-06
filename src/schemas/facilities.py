@@ -1,23 +1,40 @@
 from pydantic import BaseModel, ConfigDict
 
 
-# Схема для добавления нового удобства
 class FacilityAdd(BaseModel):
+    """
+    Схема для добавления нового удобства (услуги) через API.
+
+    Пример: {"title": "Wi-Fi"}
+    """
     title: str
 
 
-# Схема для возврата удобства с ID (используется в ответах)
 class Facility(FacilityAdd):
+    """
+    Схема ответа с удобством, включает ID.
+
+    Используется при возврате данных клиенту.
+    """
     id: int
+
     model_config = ConfigDict(from_attributes=True)  # Позволяет создавать модель из ORM-объекта
 
 
-# Схема для связи комнаты и удобства (многие-ко-многим)
 class RoomFacilityAdd(BaseModel):
+    """
+    Схема для создания связи между комнатой и удобством (many-to-many).
+
+    Пример: {"room_id": 1, "facility_id": 3}
+    """
     room_id: int
     facility_id: int
 
 
-# Схема для возврата связи комнаты и удобства с ID
 class RoomFacility(RoomFacilityAdd):
+    """
+    Схема для ответа с ID связи между комнатой и удобством.
+
+    Используется при возврате данных из базы.
+    """
     id: int

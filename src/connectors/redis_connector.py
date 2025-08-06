@@ -2,36 +2,71 @@ import logging
 import redis.asyncio as redis
 
 
-# Класс для управления асинхронным подключением к Redis
 class RedisManager:
-    def __init__(self, host: str, port: int):
-        self.host = host  # Хост Redis-сервера
-        self.port = port  # Порт Redis-сервера
-        self.redis = None  # Объект подключения будет инициализирован позже
+    """
+    Класс для управления асинхронным подключением к Redis.
 
-    # Установка соединения с Redis
+    Позволяет:
+    - устанавливать соединение
+    - устанавливать/получать/удалять ключи
+    - закрывать соединение
+    """
+
+    def __init__(self, host: str, port: int):
+        """
+        Инициализация параметров подключения.
+
+        :param host: адрес Redis-сервера
+        :param port: порт Redis-сервера
+        """
+        self.host = host
+        self.port = port
+        self.redis = None  # Объект Redis будет создан при connect()
+
     async def connect(self):
+        """
+        Подключение к Redis.
+
+        Создаёт асинхронный клиент Redis и логирует событие.
+        """
         logging.info(f"Connecting to Redis server -> host={self.host} port={self.port}")
         self.redis = await redis.Redis(host=self.host, port=self.port)
         logging.info(f"Connected to Redis server -> host={self.host} port={self.port}")
 
-    # Установка значения по ключу с необязательным временем жизни (expire — в секундах)
     async def set(self, key: str, value: str, expire: int = None):
+        """
+        Установка значения по ключу.
+
+        :param key: ключ в Redis
+        :param value: строковое значение
+        :param expire: время жизни ключа в секундах (опционально)
+        """
         if expire:
             await self.redis.set(key, value, ex=expire)
         else:
             await self.redis.set(key, value)
 
-    # Получение значения по ключу
     async def get(self, key: str):
+        """
+        Получение значения по ключу.
+
+        :param key: ключ
+        :return: значение (или None, если ключа нет)
+        """
         return await self.redis.get(key)
 
-    # Удаление ключа из Redis
     async def delete(self, key: str):
+        """
+        Удаление ключа из Redis.
+
+        :param key: ключ
+        """
         await self.redis.delete(key)
 
-    # Закрытие соединения с Redis
     async def close(self):
+        """
+        Закрытие подключения к Redis.
+        """
         if self.redis:
             await self.redis.close()
 

@@ -1,29 +1,35 @@
 from fastapi import APIRouter, Body
 from fastapi_cache.decorator import cache
 
-from src.api.dependencies import DBDep
-from src.schemas.facilities import FacilityAdd
-from src.tasks.tasks import test_tasks  # Celery задача для теста
+from src.api.dependencies import DBDep  # Зависимость — доступ к базе данных
+from src.schemas.facilities import FacilityAdd  # Pydantic-схема для создания услуги
+from src.services.facilities import FacilityService  # Сервис для работы с удобствами
 
 router = APIRouter(prefix="/facilities", tags=["Услуги"])
 
 
-# Добавление новой услуги (удобства)
 @router.post("")
 async def create_facilities(db: DBDep, facility_data: FacilityAdd = Body()):
-    facility = await db.facilities.add(facility_data)  # Добавляем в БД
-    await db.commit()  # Подтверждаем транзакцию
+    """
+    Добавление новой услуги (удобства).
 
-    test_tasks.delay()  # Запускаем фоновую задачу через Celery (необязательно)
-
+    :param db: Зависимость FastAPI — доступ к базе данных
+    :param facility_data: Данные услуги (название)
+    :return: Статус и созданная услуга
+    """
+    facility = await FacilityService(db).create_facility(facility_data)
     return {"status": "OK", "data": facility}
 
 
-# Получение списка всех услуг с кэшированием (10 секунд)
 @router.get("")
 @cache(expire=10)
-async def get_facilities(
-    db: DBDep,
-):
-    print("ИДУ В БАЗУ ДАННЫХ")  # Выводим, если реально идём в БД (не из кэша)
+async def get_facilities(db: DBDep):
+    """
+    Получение списка всех доступных услуг (удобств).
+    Кэшируется на 10 секунд, чтобы уменьшить нагрузку на базу данных.
+
+    :param db: Зависимость FastAPI — доступ к базе данных
+    :return: Список всех удобств
+    """
+    print("ИДУ В БАЗУ ДАННЫХ")  # Для отладки — видно, когда не используется кэш
     return await db.facilities.get_all()

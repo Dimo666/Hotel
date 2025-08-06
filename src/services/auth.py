@@ -10,9 +10,10 @@ from datetime import datetime, timezone, timedelta
 
 # Настройки проекта (секретный ключ, алгоритм, TTL токенов)
 from src.config import settings
+from src.services.base import BaseService
 
 
-class AuthService:
+class AuthService(BaseService):
     """
     Сервис для работы с аутентификацией:
     - создание и декодирование JWT токенов

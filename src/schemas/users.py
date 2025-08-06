@@ -1,29 +1,42 @@
-# Импортируем базовую модель Pydantic и тип EmailStr для валидации email
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
-# Схема для запроса на регистрацию и логин
 class UserRequestAdd(BaseModel):
-    email: EmailStr  # Проверяет, что это валидный email
-    password: str  # Пароль пользователя в открытом виде (от клиента)
+    """
+    Схема запроса от клиента для регистрации или авторизации.
+
+    Используется в POST /auth/register и POST /auth/login.
+    """
+    email: EmailStr  # Валидный email (валидируется автоматически)
+    password: str  # Открытый пароль, который будет захеширован
 
 
-# Схема для создания пользователя в базе данных
 class UserAdd(BaseModel):
-    email: EmailStr  # Email сохраняем как есть
-    hashed_password: str  # Пароль уже должен быть захеширован!
+    """
+    Схема для создания пользователя в базе данных.
+
+    Используется внутри бизнес-логики, когда пароль уже захеширован.
+    """
+    email: EmailStr
+    hashed_password: str  # Пароль, прошедший хеширование
 
 
-# Схема для вывода пользователя (например, при получении данных)
 class User(BaseModel):
-    id: int  # ID пользователя из базы данных
+    """
+    Схема для возврата данных о пользователе (например, в /auth/me).
+
+    Без пароля.
+    """
+    id: int  # Уникальный идентификатор пользователя
     email: EmailStr  # Email пользователя
 
-    # Это настройка Pydantic: позволяет создавать схему напрямую из ORM-объектов (из SQLAlchemy моделей)
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)  # Поддержка ORM-моделей (SQLAlchemy → Pydantic)
 
 
-# Схема пользователя с захешированным паролем
-# Наследуется от User, добавляя к нему поле hashed_password
 class UserWithHashedPassword(User):
-    hashed_password: str  # Хеш пароля (используется только внутри системы)
+    """
+    Расширенная схема пользователя, включающая хеш пароля.
+
+    Используется только внутри системы, не возвращается клиенту.
+    """
+    hashed_password: str

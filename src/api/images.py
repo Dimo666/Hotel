@@ -1,21 +1,22 @@
-import shutil
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, UploadFile, BackgroundTasks
 
-from src.tasks.tasks import resize_image  # Celery-задача для ресайза изображений
+from src.services.images import ImagesService  # Сервис для работы с изображениями
 
 router = APIRouter(prefix="/images", tags=["Изображения отелей"])
 
 
 @router.post("")
-def upload_image(file: UploadFile):
-    # Путь для сохранения оригинального изображения
-    image_path = f"src/static/images/{file.filename}"
+def upload_image(file: UploadFile, background_tasks: BackgroundTasks):
+    """
+    Загрузка изображения отеля.
 
-    # Сохраняем загруженный файл
-    with open(image_path, "wb+") as new_file:
-        shutil.copyfileobj(file.file, new_file)
+    - Сохраняет файл в файловую систему
+    - Запускает фоновую задачу на обработку (например, ресайз)
 
-    # Запускаем фоновую задачу на ресайз изображения
-    resize_image.delay(image_path)
+    :param file: загружаемый файл изображения (multipart/form-data)
+    :param background_tasks: менеджер фоновых задач FastAPI
+    :return: статус и имя файла
+    """
+    ImagesService().upload_image(file, background_tasks)
 
     return {"status": "OK", "filename": file.filename}
