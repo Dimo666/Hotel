@@ -23,3 +23,6 @@ class FacilityService(BaseService):
         test_task.delay()  # type: ignore — отключаем проверку типов для Celery
 
         return facility
+
+    async def get_facilities(self):
+        return await self.db.facilities.get_all()

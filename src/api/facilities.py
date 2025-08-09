@@ -32,4 +32,4 @@ async def get_facilities(db: DBDep):
     :return: Список всех удобств
     """
     print("ИДУ В БАЗУ ДАННЫХ")  # Для отладки — видно, когда не используется кэш
-    return await db.facilities.get_all()
+    return await FacilityService(db).get_facilities()
