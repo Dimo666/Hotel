@@ -48,6 +48,19 @@ class AllRoomsAreBookedException(BaseClassException):
     detail = "Не осталось свободных номеров"
 
 
+class IncorrectTokenException(BaseClassException):
+    detail = "Некорректный токен"
+
+
+class EmailNotRegisteredException(BaseClassException):
+    detail = "Пользователь с таким email не зарегистрирован"
+
+
+class IncorrectPasswordException(BaseClassException):
+    detail = "Пароль неверный"
+
+
+
 class UserAlreadyExistsException(BaseClassException):
     """
     Исключение, если пользователь с таким email уже существует.
@@ -93,3 +106,32 @@ class RoomNotFoundHTTPException(BaseClassHTTPException):
     """
     status_code = 404
     detail = "Номер не найден"
+
+
+class AllRoomsAreBookedHTTPException(BaseClassHTTPException):
+    status_code = 409
+    detail = "Не осталось свободных номеров"
+
+
+class IncorrectTokenHTTPException(BaseClassHTTPException):
+    detail = "Некорректный токен"
+
+
+class EmailNotRegisteredHTTPException(BaseClassHTTPException):
+    status_code = 401
+    detail = "Пользователь с таким email не зарегистрирован"
+
+
+class UserEmailAlreadyExistsHTTPException(BaseClassHTTPException):
+    status_code = 409
+    detail = "Пользователь с такой почтой уже существует"
+
+
+class IncorrectPasswordHTTPException(BaseClassHTTPException):
+    status_code = 401
+    detail = "Пароль неверный"
+
+
+class NoAccessTokenHTTPException(BaseClassHTTPException):
+    status_code = 401
+    detail = "Вы не предоставили токен доступа"

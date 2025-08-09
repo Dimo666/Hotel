@@ -1,69 +1,102 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.exceptions import ObjectNotFoundException, AllRoomsAreBookedException
-from src.schemas.bookings import BookingAddRequest, BookingAdd
-
+from src.exceptions import AllRoomsAreBookedException, AllRoomsAreBookedHTTPException
+from src.schemas.bookings import BookingAddRequest
+from src.services.bookings import BookingService
 
 router = APIRouter(prefix="/bookings", tags=["Бронирования"])
 
-
 """
-    Добавляет новое бронирование комнаты для текущего пользователя.
+    Маршруты для работы с бронированиями.
+
+    POST /bookings:
+        Добавляет новое бронирование комнаты для текущего пользователя.
+
+    GET /bookings:
+        Получение всех бронирований (для администраторов).
+
+    GET /bookings/me:
+        Получение всех бронирований текущего пользователя.
 
     Args:
-        user_id (int): ID авторизованного пользователя.
+        user_id (int): ID авторизованного пользователя для маршрутов, связанных с пользователем.
         db (DBDep): Зависимость для доступа к базе данных.
         booking_data (BookingAddRequest): Данные о бронировании (room_id, даты).
 
     Returns:
-        dict: Ответ с данными о бронировании или сообщение об ошибке.
+        dict: Ответ с данными о бронировании или сообщение об ошибке для POST-запроса.
+        list: Список всех бронирований или бронирований текущего пользователя для GET-запросов.
 
     Raises:
-        HTTPException: Если номер не найден или все номера в отеле заняты.
-    """
+        HTTPException: 
+            - Для маршрута POST /bookings если номер не найден или все номера в отеле заняты.
+            - Для маршрута GET /bookings если возникают ошибки при получении данных из базы.
+"""
 
 
 @router.post("")
 async def add_booking(
-    user_id: UserIdDep,  # Получаем user_id из токена (авторизованного пользователя)
-    db: DBDep,  # Зависимость для доступа к базе данных
-    booking_data: BookingAddRequest,  # Данные, которые прислал клиент (room_id, даты)
+        user_id: UserIdDep,  # Получаем user_id из токена (авторизованного пользователя)
+        db: DBDep,  # Зависимость для доступа к базе данных
+        booking_data: BookingAddRequest,  # Данные, которые прислал клиент (room_id, даты)
 ):
+    """
+    Создает новое бронирование для текущего пользователя.
+
+    В данном маршруте добавляется бронирование на указанную комнату с переданными датами.
+    Если все номера заняты, будет выброшено исключение.
+
+    Args:
+        user_id (int): ID текущего пользователя.
+        db (DBDep): Зависимость для доступа к базе данных.
+        booking_data (BookingAddRequest): Данные о бронировании (ID комнаты, даты бронирования).
+
+    Returns:
+        dict: Статус ответа с данными о бронировании.
+
+    Raises:
+        HTTPException: Если номер не найден или все номера заняты.
+    """
     try:
-        room = await db.rooms.get_one(id=booking_data.room_id)  # Получаем объект комнаты по ID, чтобы узнать её цену
-    except ObjectNotFoundException:
-        raise HTTPException(status_code=400, detail="Номер не найден")
-    hotel = await db.hotels.get_one(id=room.hotel_id)  # Получаем отель, к которому принадлежит комната (нужен для проверки доступности)
-    room_price: int = room.price  # Получаем цену комнаты
-    # Собираем полные данные для бронирования:
-    # добавляем user_id и цену, а остальные поля берём из запроса
-    _booking_data = BookingAdd(
-        user_id=user_id,
-        price=room_price,
-        **booking_data.model_dump(),
-    )
-    try:
-        booking = await db.bookings.add_booking(_booking_data, hotel_id=hotel.id)  # Добавляем бронирование с учётом доступности комнаты в отеле
-    except AllRoomsAreBookedException as ex:
-        raise HTTPException(status_code=400, detail=ex.detail)
-    await db.commit()  # Сохраняем изменения в базе
+        booking = await BookingService(db).add_booking(user_id, booking_data)
+    except AllRoomsAreBookedException:
+        raise AllRoomsAreBookedHTTPException
     return {"status": "OK", "data": booking}  # Возвращаем успешный ответ с данными о бронировании
 
 
-# Получение всех бронирований (GET /bookings) — для админов
 @router.get("")
-async def get_bookings(
-    db: DBDep,
-):
-    return await db.bookings.get_all()
+async def get_bookings(db: DBDep):
+    """
+    Получает все бронирования (для администраторов).
+
+    Этот маршрут позволяет администратору получить список всех бронирований.
+
+    Args:
+        db (DBDep): Зависимость для доступа к базе данных.
+
+    Returns:
+        list: Список всех бронирований.
+    """
+    return await BookingService(db).get_bookings()
 
 
-# Получение бронирований текущего пользователя (GET /bookings/me)
 @router.get("/me")
 async def get_me(
-    db: DBDep,
-    user_id: UserIdDep,
+        db: DBDep,
+        user_id: UserIdDep,
 ):
-    bookings = await db.bookings.get_filtered(user_id=user_id)
+    """
+    Получает все бронирования текущего пользователя.
+
+    Этот маршрут позволяет пользователю получить список своих бронирований.
+
+    Args:
+        db (DBDep): Зависимость для доступа к базе данных.
+        user_id (int): ID текущего пользователя.
+
+    Returns:
+        dict: Список бронирований текущего пользователя.
+    """
+    bookings = await BookingService(db).get_my_bookings(user_id)
     return {"status": "OK", "data": bookings}

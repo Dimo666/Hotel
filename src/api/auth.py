@@ -1,9 +1,12 @@
 # Импорты FastAPI
 from fastapi import HTTPException, APIRouter, Response
+from sqlalchemy.sql.functions import user
 
 # Зависимости — извлекают user_id из токена и создают доступ к БД
 from src.api.dependencies import UserIdDep, DBDep
-from src.exceptions import ObjectAlreadyExistsException
+from src.exceptions import ObjectAlreadyExistsException, EmailNotRegisteredException, EmailNotRegisteredHTTPException, \
+    IncorrectPasswordException, IncorrectPasswordHTTPException, UserAlreadyExistsException, \
+    UserEmailAlreadyExistsHTTPException
 
 # Pydantic-схемы (валидация и сериализация данных)
 from src.schemas.users import UserRequestAdd, UserAdd
@@ -34,17 +37,17 @@ async def login_user(
     :raises HTTPException: если пользователь не найден или пароль неверный
     :return: access_token
     """
-    user = await db.users.get_user_with_hashed_password(email=data.email)
-    if not user:
-        raise HTTPException(status_code=401, detail="Пользователь с таким email не зарегистрирован")
+    try:
+        access_token = await AuthService(db).login_user(data)
+    except EmailNotRegisteredException:
+        raise EmailNotRegisteredHTTPException
+    except IncorrectPasswordException:
+        raise IncorrectPasswordHTTPException
 
-    if not AuthService().verify_password(data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Пароль неверный")
 
-    access_token = AuthService().create_access_token({"user_id": user.id})
     response.set_cookie("access_token", access_token)
-
     return {"access_token": access_token}
+
 
 
 @router.post("/register")
@@ -64,14 +67,10 @@ async def register_user(
     :raises HTTPException: если пользователь уже существует
     :return: статус OK
     """
-    hashed_password = AuthService().hash_password(data.password)
-    new_user_data = UserAdd(email=data.email, hashed_password=hashed_password)
-
     try:
-        await db.users.add(new_user_data)
-        await db.commit()
-    except ObjectAlreadyExistsException:
-        raise HTTPException(status_code=409, detail="Пользователь с такой почтой уже существует")
+        await AuthService(db).register_user(data)
+    except UserAlreadyExistsException:
+        raise UserEmailAlreadyExistsHTTPException
 
     return {"status": "OK"}
 
@@ -88,8 +87,8 @@ async def get_me(
     :param db: доступ к базе данных
     :return: объект пользователя или None
     """
-    user = await db.users.get_one_or_none(id=user_id)
-    return user
+    return await AuthService(db).get_one_or_none(user_id)
+
 
 
 @router.post("/logout")

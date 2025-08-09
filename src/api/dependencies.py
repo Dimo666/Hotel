@@ -3,6 +3,7 @@ from fastapi import Depends, Query, HTTPException, Request
 from pydantic import BaseModel
 
 from src.database import async_session_maker
+from src.exceptions import IncorrectTokenHTTPException, IncorrectTokenException, NoAccessTokenHTTPException
 from src.services.auth import AuthService
 from src.utils.db_manager import DBManager
 
@@ -34,7 +35,7 @@ def get_token(request: Request) -> str:
     """
     token = request.cookies.get("access_token", None)
     if not token:
-        raise HTTPException(status_code=401, detail="Вы не предоставили токен доступа")
+        raise NoAccessTokenHTTPException
     return token
 
 
@@ -46,17 +47,15 @@ def get_current_user_id(token: str = Depends(get_token)) -> int:
     :param token: JWT токен из cookie
     :return: user_id (int)
     """
-    data = AuthService().decode_token(token)
+    try:
+        data = AuthService().decode_token(token)
+    except IncorrectTokenException:
+        raise IncorrectTokenHTTPException
     return data["user_id"]
 
 
 # ✅ Тип-зависимость: user_id, извлечённый из токена
 UserIdDep = Annotated[int, Depends(get_current_user_id)]
-
-
-# 🚫 Неиспользуемый генератор (оставлен по ошибке)
-def get_db_manager():
-    return  # TODO: удалить или реализовать
 
 
 # 🗄️ Асинхронный генератор доступа к БД
