@@ -48,3 +48,7 @@ docker run --name booking_nginx \
     --volume ./nginx.conf:/etc/nginx/nginx.conf \
     --network=myNetwork \
     --rm -p 80:80 nginx
+
+
+# Коммит на gitlab
+git push --all gitlab
