@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Настройка логирования на уровне DEBUG
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 from src.init import redis_manager  # Инициализация Redis-соединения
 
@@ -57,4 +57,4 @@ app.include_router(router_images)
 
 # Точка входа при запуске через `python main.py`
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)  # reload=True — автообновление при изменении кода
+    uvicorn.run("main:app", host="0.0.0.0", reload=True)  # reload=True — автообновление при изменении кода

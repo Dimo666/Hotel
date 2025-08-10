@@ -65,7 +65,9 @@ class RoomService(BaseService):
             RoomFacilityAdd(room_id=room.id, facility_id=f_id)
             for f_id in room_data.facilities_ids
         ]
-        await self.db.rooms_facilities.add_bulk(rooms_facilities_data)
+        # если нет удобств тогда не исполняем код
+        if rooms_facilities_data:
+            await self.db.rooms_facilities.add_bulk(rooms_facilities_data)
 
         await self.db.commit()
 
