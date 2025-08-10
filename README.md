@@ -1,3 +1,6 @@
+git config --local user.name "Dmitry Kitaev"
+git config --local user.email "info.fleet.gdr@gmail.com"
+
 
 # Создать Docker сети
 docker network create myNetwork
