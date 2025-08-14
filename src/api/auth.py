@@ -75,7 +75,7 @@ async def register_user(
     return {"status": "OK"}
 
 
-@router.get("/me")
+@router.get("/me", summary="👨‍💻Мой профиль")
 async def get_me(
     user_id: UserIdDep,  # user_id берется из JWT
     db: DBDep,
