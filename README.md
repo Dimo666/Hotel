@@ -52,3 +52,5 @@ docker run --name booking_nginx \
 
 # Коммит на gitlab
 git push --all gitlab
+
+#
