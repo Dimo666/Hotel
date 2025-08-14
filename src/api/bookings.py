@@ -37,9 +37,9 @@ router = APIRouter(prefix="/bookings", tags=["Бронирования"])
 
 @router.post("")
 async def add_booking(
-        user_id: UserIdDep,  # Получаем user_id из токена (авторизованного пользователя)
-        db: DBDep,  # Зависимость для доступа к базе данных
-        booking_data: BookingAddRequest,  # Данные, которые прислал клиент (room_id, даты)
+    user_id: UserIdDep,  # Получаем user_id из токена (авторизованного пользователя)
+    db: DBDep,  # Зависимость для доступа к базе данных
+    booking_data: BookingAddRequest,  # Данные, которые прислал клиент (room_id, даты)
 ):
     """
     Создает новое бронирование для текущего пользователя.
@@ -83,8 +83,8 @@ async def get_bookings(db: DBDep):
 
 @router.get("/me")
 async def get_my_bookings(
-        db: DBDep,
-        user_id: UserIdDep,
+    db: DBDep,
+    user_id: UserIdDep,
 ):
     """
     Получает все бронирования текущего пользователя.

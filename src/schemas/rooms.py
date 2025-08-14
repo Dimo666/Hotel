@@ -9,6 +9,7 @@ class RoomAddRequest(BaseModel):
 
     Используется в POST /rooms.
     """
+
     title: str  # Название комнаты
     description: str | None = None  # Описание (необязательное)
     price: int  # Цена за ночь
@@ -21,6 +22,7 @@ class RoomAdd(BaseModel):
     Внутренняя модель для создания комнаты в репозитории.
     Уже включает hotel_id, но без списка удобств.
     """
+
     hotel_id: int
     title: str
     description: str | None = None
@@ -34,6 +36,7 @@ class Room(RoomAdd):
 
     Наследует все поля из RoomAdd и добавляет `id`.
     """
+
     id: int
 
     model_config = ConfigDict(from_attributes=True)  # Позволяет создавать из ORM
@@ -45,6 +48,7 @@ class RoomWithRels(Room):
 
     Используется в ответах, где нужно показать связанные удобства.
     """
+
     facilities: list[Facility]
 
 
@@ -54,6 +58,7 @@ class RoomPatchRequest(BaseModel):
 
     Все поля являются необязательными.
     """
+
     title: str | None = None
     description: str | None = None
     price: int | None = None
@@ -67,6 +72,7 @@ class RoomPatch(BaseModel):
 
     Обычно собирается из RoomPatchRequest + hotel_id.
     """
+
     hotel_id: int | None = None
     title: str | None = None
     description: str | None = None

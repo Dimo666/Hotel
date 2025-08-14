@@ -2,7 +2,7 @@ from datetime import date
 from sqlalchemy import select, func
 
 from src.models.hotels import HotelsOrm  # ORM-модель отелей
-from src.models.rooms import RoomsOrm    # ORM-модель комнат
+from src.models.rooms import RoomsOrm  # ORM-модель комнат
 from src.repositories.base import BaseRepository  # Базовый репозиторий
 from src.repositories.mappers.mappers import HotelDataMapper  # Маппер ORM → доменная модель
 from src.repositories.utils import rooms_ids_for_booking  # Утилита для фильтрации свободных комнат
@@ -41,26 +41,18 @@ class HotelsRepository(BaseRepository):
         rooms_ids_to_get = rooms_ids_for_booking(date_from=date_from, date_to=date_to)
 
         # Получаем ID отелей, в которых есть такие свободные комнаты
-        hotels_ids_to_get = (
-            select(RoomsOrm.hotel_id)
-            .select_from(RoomsOrm)
-            .filter(RoomsOrm.id.in_(rooms_ids_to_get))
-        )
+        hotels_ids_to_get = select(RoomsOrm.hotel_id).select_from(RoomsOrm).filter(RoomsOrm.id.in_(rooms_ids_to_get))
 
         # Формируем запрос к таблице отелей с фильтрацией по наличию свободных комнат
         query = select(HotelsOrm).filter(HotelsOrm.id.in_(hotels_ids_to_get))
 
         # Фильтрация по локации (регистронезависимо)
         if location:
-            query = query.filter(
-                func.lower(HotelsOrm.location).contains(location.strip().lower())
-            )
+            query = query.filter(func.lower(HotelsOrm.location).contains(location.strip().lower()))
 
         # Фильтрация по названию (регистронезависимо)
         if title:
-            query = query.filter(
-                func.lower(HotelsOrm.title).contains(title.strip().lower())
-            )
+            query = query.filter(func.lower(HotelsOrm.title).contains(title.strip().lower()))
 
         # Применяем пагинацию
         query = query.limit(limit).offset(offset)

@@ -10,6 +10,7 @@ class BookingsOrm(Base):
     """
     ORM-модель таблицы 'bookings' — хранит информацию о бронированиях комнат пользователями.
     """
+
     __tablename__ = "bookings"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # Уникальный ID бронирования

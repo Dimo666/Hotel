@@ -10,6 +10,7 @@ class FacilitiesRepository(BaseRepository):
     """
     Репозиторий для управления удобствами (Facilities).
     """
+
     model = FacilitiesOrm
     mapper = FacilityDataMapper
 
@@ -18,6 +19,7 @@ class RoomsFacilitiesRepository(BaseRepository):
     """
     Репозиторий для управления связью комнат и удобств (many-to-many).
     """
+
     model = RoomsFacilitiesOrm
     schema = RoomFacility
 
@@ -50,7 +52,5 @@ class RoomsFacilitiesRepository(BaseRepository):
 
         # Добавляем новые связи комната-удобство
         if ids_to_insert:
-            insert_stmt = insert(self.model).values([
-                {"room_id": room_id, "facility_id": f_id} for f_id in ids_to_insert
-            ])
+            insert_stmt = insert(self.model).values([{"room_id": room_id, "facility_id": f_id} for f_id in ids_to_insert])
             await self.session.execute(insert_stmt)

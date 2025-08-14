@@ -14,6 +14,7 @@ class RoomsOrm(Base):
 
     Каждая комната принадлежит одному отелю и может быть связана с несколькими удобствами (many-to-many).
     """
+
     __tablename__ = "rooms"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # Уникальный идентификатор комнаты
@@ -25,6 +26,6 @@ class RoomsOrm(Base):
 
     # Связь many-to-many с удобствами (facilities)
     facilities: Mapped[list["FacilitiesOrm"]] = relationship(
-        back_populates="rooms",           # Обратная связь из FacilitiesOrm.rooms
-        secondary="rooms_facilities",     # Промежуточная таблица связи
+        back_populates="rooms",  # Обратная связь из FacilitiesOrm.rooms
+        secondary="rooms_facilities",  # Промежуточная таблица связи
     )

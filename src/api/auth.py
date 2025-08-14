@@ -3,9 +3,14 @@ from fastapi import APIRouter, Response
 
 # Зависимости — извлекают user_id из токена и создают доступ к БД
 from src.api.dependencies import UserIdDep, DBDep
-from src.exceptions import EmailNotRegisteredException, EmailNotRegisteredHTTPException, \
-    IncorrectPasswordException, IncorrectPasswordHTTPException, UserAlreadyExistsException, \
-    UserEmailAlreadyExistsHTTPException
+from src.exceptions import (
+    EmailNotRegisteredException,
+    EmailNotRegisteredHTTPException,
+    IncorrectPasswordException,
+    IncorrectPasswordHTTPException,
+    UserAlreadyExistsException,
+    UserEmailAlreadyExistsHTTPException,
+)
 
 # Pydantic-схемы (валидация и сериализация данных)
 from src.schemas.users import UserRequestAdd
@@ -43,10 +48,8 @@ async def login_user(
     except IncorrectPasswordException:
         raise IncorrectPasswordHTTPException
 
-
     response.set_cookie("access_token", access_token)
     return {"access_token": access_token}
-
 
 
 @router.post("/register")
@@ -87,7 +90,6 @@ async def get_me(
     :return: объект пользователя или None
     """
     return await AuthService(db).get_one_or_none(user_id)
-
 
 
 @router.post("/logout")

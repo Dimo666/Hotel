@@ -7,6 +7,7 @@ class BaseClassException(Exception):
     Базовое исключение для бизнес-ошибок приложения (не HTTP).
     Все кастомные ошибки должны наследоваться от него.
     """
+
     detail = "Неожиданная ошибка"
 
     def __init__(self, *args, **kwargs):
@@ -17,6 +18,7 @@ class ObjectNotFoundException(BaseClassException):
     """
     Исключение, если любой объект не найден (универсальное).
     """
+
     detail = "Объект не найден"
 
 
@@ -24,6 +26,7 @@ class RoomNotFoundException(BaseClassException):
     """
     Исключение, если номер (комната) не найден.
     """
+
     detail = "Номер не найден"
 
 
@@ -31,6 +34,7 @@ class HotelNotFoundException(BaseClassException):
     """
     Исключение, если отель не найден.
     """
+
     detail = "Отель не найден"
 
 
@@ -38,6 +42,7 @@ class ObjectAlreadyExistsException(BaseClassException):
     """
     Исключение, если объект уже существует.
     """
+
     detail = "Похожий объект уже существует"
 
 
@@ -45,6 +50,7 @@ class AllRoomsAreBookedException(BaseClassException):
     """
     Исключение, если все номера в отеле уже забронированы в заданный период.
     """
+
     detail = "Не осталось свободных номеров"
 
 
@@ -60,11 +66,11 @@ class IncorrectPasswordException(BaseClassException):
     detail = "Пароль неверный"
 
 
-
 class UserAlreadyExistsException(BaseClassException):
     """
     Исключение, если пользователь с таким email уже существует.
     """
+
     detail = "Пользователь уже существует"
 
 
@@ -85,6 +91,7 @@ class BaseClassHTTPException(HTTPException):
     Базовый класс для HTTP-исключений с предустановленным статусом и detail-сообщением.
     Удобен для использования с FastAPI.
     """
+
     status_code = 500
     detail = None
 
@@ -96,6 +103,7 @@ class HotelNotFoundHTTPException(BaseClassHTTPException):
     """
     HTTP-ошибка 404, если отель не найден.
     """
+
     status_code = 404
     detail = "Отель не найден"
 
@@ -104,6 +112,7 @@ class RoomNotFoundHTTPException(BaseClassHTTPException):
     """
     HTTP-ошибка 404, если номер не найден.
     """
+
     status_code = 404
     detail = "Номер не найден"
 

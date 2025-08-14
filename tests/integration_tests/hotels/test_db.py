@@ -9,10 +9,7 @@ async def test_add_hotel(db):
     :param db: тестовая сессия с доступом к hotel-репозиторию
     """
     # 🔹 Создаём тестовые данные отеля
-    hotel_data = HotelAdd(
-        title="Hotels 5 stars",
-        location="San Francisco, CA"
-    )
+    hotel_data = HotelAdd(title="Hotels 5 stars", location="San Francisco, CA")
 
     # 🔹 Добавляем отель в базу данных через репозиторий
     new_hotel_data = await db.hotels.add(hotel_data)

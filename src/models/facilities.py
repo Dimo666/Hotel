@@ -13,6 +13,7 @@ class FacilitiesOrm(Base):
 
     Примеры: Wi-Fi, кондиционер, завтрак включён.
     """
+
     __tablename__ = "facilities"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # Уникальный идентификатор удобства
@@ -20,8 +21,8 @@ class FacilitiesOrm(Base):
 
     # Связь many-to-many с комнатами через промежуточную таблицу rooms_facilities
     rooms: Mapped[list["RoomsOrm"]] = relationship(
-        back_populates="facilities",       # Обратная связь из модели RoomsOrm
-        secondary="rooms_facilities",      # Название промежуточной таблицы
+        back_populates="facilities",  # Обратная связь из модели RoomsOrm
+        secondary="rooms_facilities",  # Название промежуточной таблицы
     )
 
 
@@ -29,6 +30,7 @@ class RoomsFacilitiesOrm(Base):
     """
     Промежуточная таблица 'rooms_facilities' для связи many-to-many между комнатами и удобствами.
     """
+
     __tablename__ = "rooms_facilities"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # Уникальный ID связи

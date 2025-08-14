@@ -7,6 +7,7 @@ class FacilityAdd(BaseModel):
 
     Пример: {"title": "Wi-Fi"}
     """
+
     title: str
 
 
@@ -16,6 +17,7 @@ class Facility(FacilityAdd):
 
     Используется при возврате данных клиенту.
     """
+
     id: int
 
     model_config = ConfigDict(from_attributes=True)  # Позволяет создавать модель из ORM-объекта
@@ -27,6 +29,7 @@ class RoomFacilityAdd(BaseModel):
 
     Пример: {"room_id": 1, "facility_id": 3}
     """
+
     room_id: int
     facility_id: int
 
@@ -37,4 +40,5 @@ class RoomFacility(RoomFacilityAdd):
 
     Используется при возврате данных из базы.
     """
+
     id: int

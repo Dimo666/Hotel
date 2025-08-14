@@ -46,7 +46,6 @@ class BookingService(BaseService):
         await self.db.commit()  # Сохраняем изменения в базе
         return booking
 
-
     async def get_bookings(self):
         """
         Получает все бронирования.

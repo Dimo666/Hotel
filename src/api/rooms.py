@@ -2,8 +2,7 @@ from datetime import date
 
 from fastapi import APIRouter, Body, Query
 from src.api.dependencies import DBDep
-from src.exceptions import RoomNotFoundException, HotelNotFoundException, \
-    HotelNotFoundHTTPException, RoomNotFoundHTTPException
+from src.exceptions import RoomNotFoundException, HotelNotFoundException, HotelNotFoundHTTPException, RoomNotFoundHTTPException
 from src.schemas.rooms import RoomAddRequest, RoomPatchRequest
 from src.services.rooms import RoomService
 

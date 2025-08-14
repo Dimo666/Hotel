@@ -9,8 +9,7 @@ from datetime import datetime, timezone, timedelta
 
 # Настройки проекта (секретный ключ, алгоритм, TTL токенов)
 from src.config import settings
-from src.exceptions import IncorrectPasswordException, EmailNotRegisteredException, ObjectAlreadyExistsException, \
-    UserAlreadyExistsException
+from src.exceptions import IncorrectPasswordException, EmailNotRegisteredException, ObjectAlreadyExistsException, UserAlreadyExistsException
 from src.schemas.users import UserRequestAdd, UserAdd
 from src.services.base import BaseService
 
@@ -71,7 +70,6 @@ class AuthService(BaseService):
             return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
         except jwt.exceptions.DecodeError:
             raise IncorrectPasswordException
-
 
     async def login_user(self, data: UserRequestAdd):
         user = await self.db.users.get_user_with_hashed_password(email=data.email)

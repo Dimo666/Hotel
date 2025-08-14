@@ -7,6 +7,7 @@ class UserRequestAdd(BaseModel):
 
     Используется в POST /auth/register и POST /auth/login.
     """
+
     email: EmailStr  # Валидный email (валидируется автоматически)
     password: str  # Открытый пароль, который будет захеширован
 
@@ -17,6 +18,7 @@ class UserAdd(BaseModel):
 
     Используется внутри бизнес-логики, когда пароль уже захеширован.
     """
+
     email: EmailStr
     hashed_password: str  # Пароль, прошедший хеширование
 
@@ -27,6 +29,7 @@ class User(BaseModel):
 
     Без пароля.
     """
+
     id: int  # Уникальный идентификатор пользователя
     email: EmailStr  # Email пользователя
 
@@ -39,4 +42,5 @@ class UserWithHashedPassword(User):
 
     Используется только внутри системы, не возвращается клиенту.
     """
+
     hashed_password: str

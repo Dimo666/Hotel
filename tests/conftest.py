@@ -4,10 +4,7 @@ from unittest import mock
 
 # 🚫 Отключаем кэширование в тестах
 # Заменяем декоратор @cache на пустую обёртку, чтобы кэш не мешал тестам
-mock.patch(
-    "fastapi_cache.decorator.cache",
-    lambda *args, **kwargs: lambda f: f
-).start()
+mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 
 
 import pytest
@@ -96,10 +93,7 @@ async def register_user(ac, setup_database):
     Регистрирует тестового пользователя один раз за сессию.
     Используется для тестов, где требуется логин.
     """
-    await ac.post(
-        "/auth/register",
-        json={"email": "kot@pes.com", "password": "1234"}
-    )
+    await ac.post("/auth/register", json={"email": "kot@pes.com", "password": "1234"})
 
 
 # ✅ Аутентифицированный клиент (после логина)
@@ -110,10 +104,7 @@ async def authenticated_ac(register_user, ac):
 
     Используется в тестах, где требуется авторизация.
     """
-    await ac.post(
-        "/auth/login",
-        json={"email": "kot@pes.com", "password": "1234"}
-    )
+    await ac.post("/auth/login", json={"email": "kot@pes.com", "password": "1234"})
 
     assert ac.cookies["access_token"], "Access token не установлен после логина"
 

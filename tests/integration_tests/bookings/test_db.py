@@ -1,6 +1,7 @@
 from datetime import date
 from src.schemas.bookings import BookingAdd
 
+
 # 🔁 Полный тест всех CRUD-операций над бронированием
 async def test_booking_crud(db):
     # 📦 CREATE: создаём бронирование
@@ -47,4 +48,3 @@ async def test_booking_crud(db):
     # 🧪 Проверяем, что бронирование удалено
     booking = await db.bookings.get_one_or_none(id=new_booking.id)
     assert not booking  # должно быть None
-

@@ -1,7 +1,6 @@
 from datetime import date
 
-from src.exceptions import check_date_to_after_date_from, ObjectNotFoundException, HotelNotFoundException, \
-    RoomNotFoundException
+from src.exceptions import check_date_to_after_date_from, ObjectNotFoundException, HotelNotFoundException, RoomNotFoundException
 from src.schemas.facilities import RoomFacilityAdd
 from src.schemas.rooms import RoomAddRequest, Room, RoomAdd, RoomPatchRequest, RoomPatch
 from src.services.base import BaseService
@@ -24,11 +23,7 @@ class RoomService(BaseService):
         :return: список комнат
         """
         check_date_to_after_date_from(date_from, date_to)  # Проверка валидности дат
-        return await self.db.rooms.get_filtered_by_time(
-            hotel_id=hotel_id,
-            date_from=date_from,
-            date_to=date_to
-        )
+        return await self.db.rooms.get_filtered_by_time(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
 
     async def get_room(self, room_id: int, hotel_id: int):
         """
@@ -61,10 +56,7 @@ class RoomService(BaseService):
         room: Room = await self.db.rooms.add(_room_data)
 
         # Создаём связи с удобствами
-        rooms_facilities_data = [
-            RoomFacilityAdd(room_id=room.id, facility_id=f_id)
-            for f_id in room_data.facilities_ids
-        ]
+        rooms_facilities_data = [RoomFacilityAdd(room_id=room.id, facility_id=f_id) for f_id in room_data.facilities_ids]
         # если нет удобств тогда не исполняем код
         if rooms_facilities_data:
             await self.db.rooms_facilities.add_bulk(rooms_facilities_data)
@@ -90,9 +82,7 @@ class RoomService(BaseService):
         await self.db.rooms.edit(_room_data, id=room_id)
 
         # Обновляем удобства
-        await self.db.rooms_facilities.set_room_facilities(
-            room_id, facilities_ids=room_data.facilities_ids
-        )
+        await self.db.rooms_facilities.set_room_facilities(room_id, facilities_ids=room_data.facilities_ids)
         await self.db.commit()
 
     async def partially_edit_room(self, hotel_id: int, room_id: int, room_data: RoomPatchRequest):
@@ -114,18 +104,11 @@ class RoomService(BaseService):
 
         # Обновляем только указанные поля
         _room_data = RoomPatch(hotel_id=hotel_id, **_room_data_dict)
-        await self.db.rooms.edit(
-            _room_data,
-            exclude_unset=True,
-            id=room_id,
-            hotel_id=hotel_id
-        )
+        await self.db.rooms.edit(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
 
         # Если переданы новые удобства — обновляем связи
         if "facilities_ids" in _room_data_dict:
-            await self.db.rooms_facilities.set_room_facilities(
-                room_id, facilities_ids=_room_data_dict["facilities_ids"]
-            )
+            await self.db.rooms_facilities.set_room_facilities(room_id, facilities_ids=_room_data_dict["facilities_ids"])
 
         await self.db.commit()
 

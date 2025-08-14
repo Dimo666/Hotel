@@ -9,6 +9,7 @@ class BookingAddRequest(BaseModel):
     Используется в ручке POST /bookings.
     Клиент передаёт ID комнаты и даты заезда/выезда.
     """
+
     room_id: int
     date_from: date
     date_to: date
@@ -21,6 +22,7 @@ class BookingAdd(BaseModel):
 
     Добавляется user_id и вычисленная цена.
     """
+
     user_id: int
     room_id: int
     date_from: date
@@ -34,6 +36,7 @@ class Booking(BookingAdd):
 
     Наследует все поля из BookingAdd + добавляет id.
     """
+
     id: int
 
     model_config = ConfigDict(from_attributes=True)  # Автоматическое преобразование из ORM

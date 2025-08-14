@@ -9,6 +9,7 @@ class HotelsOrm(Base):
 
     Примеры: Hilton, Radisson, Plaza Inn и т.п.
     """
+
     __tablename__ = "hotels"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # Уникальный ID отеля
