@@ -1,4 +1,3 @@
-from httpx import AsyncClient
 
 # ✅ Тест на получение списка удобств (GET /facilities)
 async def test_get_facilities(ac):
