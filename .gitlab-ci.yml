@@ -4,24 +4,11 @@ stages:
 
 build-job:
   stage: build
-  image:
-    name: docker:27
-    pull_policy: if-not-present
-  services:
-    - name: docker:27-dind
-      pull_policy: if-not-present
   script:
-    - docker build --pull --rm -t booking-api-image .
-    - docker image prune -f   # очистка лишних образов после сборки
+    - docker build -t booking-api-image .
+
 
 deploy-job:
   stage: deploy
-  image:
-    name: docker:27
-    pull_policy: if-not-present
-  services:
-    - name: docker:27-dind
-      pull_policy: if-not-present
   script:
     - docker compose up -d
-    - docker image prune -f   # очистка после деплоя
