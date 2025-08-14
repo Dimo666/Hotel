@@ -1,3 +1,6 @@
+git config --local user.name "Dmitry Kitaev"
+git config --local user.email "info.fleet.gdr@gmail.com"
+
 
 # Создать Docker сети
 docker network create myNetwork
@@ -18,6 +21,8 @@ docker run --name booking_cache \
     --network=myNetwork \
     -d redis:7.4
 
+# пересобрать docker образ для booking_image
+docker build -t booking_image .
 
 # Создание приложения Booking
 docker run --name booking_back \
@@ -43,3 +48,9 @@ docker run --name booking_nginx \
     --volume ./nginx.conf:/etc/nginx/nginx.conf \
     --network=myNetwork \
     --rm -p 80:80 nginx
+
+
+# Коммит на gitlab
+git push --all gitlab
+
+#
