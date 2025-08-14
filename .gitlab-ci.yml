@@ -4,9 +4,12 @@ stages:
 
 build-job:
   stage: build
+  before_script:
+    # Чистим кеши и лишние образы в DinD, чтобы освободить место
+    - docker system prune -af --volumes || true
+    - docker builder prune -af || true
   script:
-    - docker build -t booking-api-image .
-
+    - docker build --no-cache -t booking-api-image .
 
 deploy-job:
   stage: deploy
