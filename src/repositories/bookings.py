@@ -1,5 +1,4 @@
 from datetime import date
-from fastapi import HTTPException
 from sqlalchemy import select
 
 from src.exceptions import AllRoomsAreBookedException

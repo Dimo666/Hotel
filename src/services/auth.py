@@ -1,6 +1,5 @@
 # Импортируем библиотеку для работы с JWT токенами
 import jwt
-from fastapi import HTTPException
 
 # Контекст для безопасного хеширования паролей
 from passlib.context import CryptContext
