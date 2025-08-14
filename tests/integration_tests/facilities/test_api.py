@@ -1,3 +1,5 @@
+from httpx import AsyncClient
+
 # ✅ Тест на получение списка удобств (GET /facilities)
 async def test_get_facilities(ac):
     # Отправляем GET-запрос на ручку /facilities
@@ -23,6 +25,6 @@ async def test_post_facilities(ac):
     # Проверяем структуру и содержимое ответа
     res = response.json()
     assert isinstance(res, dict)  # Ответ — словарь
-    assert res["status"] == "OK"  # Статус успешный
-    assert "data" in res  # Есть поле "data"
     assert res["data"]["title"] == facility_title  # Название соответствует отправленному
+    assert "data" in res  # Есть поле "data"
+    assert res["status"] == "OK"  # Статус успешный
